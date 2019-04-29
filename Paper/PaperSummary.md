@@ -34,16 +34,21 @@
 * DNQ: Dynamic Network Quantization
 * Training Hard-Threshold Networks with Combinatorial Search in a Discrete Target Propagation Setting
 * An Empirical study of Binary Neural Networks' Optimisation !
+* Heterogeneous Bitwidth Binarization in Convolutional Neural Networks !
+* HitNet: Hybrid Ternary Recurrent Neural Network !
 
 # Probabilistic Quantization
 
 * Relaxed Quantization for Discretized Neural Networks
+* [Learning Discrete Weights Using the Local Reparameterization Trick](https://arxiv.org/abs/1710.07739)
+* Expectation Backpropagation: Parameter-Free Training of Multilayer Neural Networks with Continuous or Discrete Weights
 
 
 
 # Quantization Theory
 
-* 
+* Analysis of Quantized Models
+* On the Universal Approximability and Complexity Bounds of Quantized ReLU Neural Networks
 
 
 

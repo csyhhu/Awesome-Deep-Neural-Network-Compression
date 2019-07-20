@@ -78,6 +78,12 @@
 
 
 
+# Pruning Theory
+
+- Stronger generalization bounds for deep nets via a compression approach
+
+
+
 # Quantization with Distillation
 
 * [Model compression via distillation and quantization](https://arxiv.org/abs/1802.05668)

@@ -4,16 +4,16 @@ A repo for **my** re-implementation of state-of-the-art methods. Mostly written 
 
 Leave me an issue if you found anything wrong or want to contribute it.
 ## Methods
-- [X] [DoReFa](./DoReFa/README.md)
-- [X] [BWN](./DoReFa/README.md)
-- [X] [TTQ](./TTQ/README.md)
-- [X] [ExNN](./ExNN/README.md)
-- [ ] INQ
+- [X] [DoReFa](./DoReFa/README.md): [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](https://arxiv.org/abs/1606.06160)
+- [X] [BWN](./DoReFa/README.md): [XNOR-Net: ImageNet Classification Using Binary Convolutional Neural Networks](https://arxiv.org/abs/1603.05279)
+- [X] [TTQ](./TTQ/README.md): [Trained Ternary Quantization](https://arxiv.org/pdf/1612.01064v1.pdf)
+- [ ] [ExNN](./ExNN/README.md): [Extremely Low Bit Neural Network: Squeeze the Last Bit Out with ADMM](https://arxiv.org/abs/1707.09870)
+- [ ] INQ: [Incremental Network Quantization: Towards Lossless CNNs with Low-Precision Weights](https://arxiv.org/abs/1702.03044)
 
 The following are my work:
-- [L-OBS](https://github.com/csyhhu/L-OBS) [NIPS2017]
-- [L-DNQ](https://github.com/csyhhu/L-DNQ) [AAAI2019]
-- [Co-Prune](https://github.com/csyhhu/Co-Prune) [IJCAI2019]
+- [L-OBS](https://github.com/csyhhu/L-OBS) [NIPS2017] First author: [Xing Dong](http://www.simonxin.com/)
+- [L-DNQ](https://github.com/csyhhu/L-DNQ) [AAAI2019] Co-work with: [Wenya Wang](https://www.ntu.edu.sg/home/wangwy/), [Sinno Jialin Pan](https://www.ntu.edu.sg/home/sinnopan/)
+- [Co-Prune](https://github.com/csyhhu/Co-Prune) [IJCAI2019] Co-work with: [Wenya Wang](https://www.ntu.edu.sg/home/wangwy/), [Sinno Jialin Pan](https://www.ntu.edu.sg/home/sinnopan/)
 
 
 ## How to use them
@@ -73,7 +73,8 @@ release pretrained model will show a slight drop in performance (2% drop in my c
 | Method | W | A | G | E | Quantized Acc | FP Acc |
 | :-------:|:---:|:---:|:---:|:---:|:-------------:|:--------:|
 | TTQ    |1.5| 32| 32| 32|     90.3      | 91.5  |
-| DoReFa | 1 | 32|32|32| |
+| DoReFa | 1 | 32|32|32| 89.69 | 91.5|
+| BWN    | 1 | 32|32|32| 90.3 | 91.5|
 
 
 ### Acknowledgement

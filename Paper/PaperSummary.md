@@ -1,4 +1,4 @@
-# General
+# Quantization
 
 ## Weights Quantization
 
@@ -37,25 +37,92 @@
 * Towards the Limit of Network Quantization
 * LSQ++: Lower running time and higher recall in multi-codebook quantization
 
-## Unclassified
-
-* Scalable Methods for 8-bit Training of Neural Networks
-* Efficient end-to-end learning for quantizable representations ([code](https://github.com/maestrojeong/Deep-Hash-Table-ICML18)) !
-* Network Sketching: Exploiting Binary Structure in Deep CNNs !
-* DNQ: Dynamic Network Quantization
-* Training Hard-Threshold Networks with Combinatorial Search in a Discrete Target Propagation Setting
-* An Empirical study of Binary Neural Networks' Optimisation !
-* Heterogeneous Bitwidth Binarization in Convolutional Neural Networks !
-* HitNet: Hybrid Ternary Recurrent Neural Network !
-
-
-
-# Probabilistic (Bayesian) Quantization
+## Probabilistic (Bayesian) Quantization
 
 * Relaxed Quantization for Discretized Neural Networks
 * [Learning Discrete Weights Using the Local Reparameterization Trick](https://arxiv.org/abs/1710.07739)
 * Expectation Backpropagation: Parameter-Free Training of Multilayer Neural Networks with Continuous or Discrete Weights
 
+## Quantization Theory
+
+* Analysis of Quantized Models
+* On the Universal Approximability and Complexity Bounds of Quantized ReLU Neural Networks
+
+
+## Quantization with Distillation
+
+* [Model compression via distillation and quantization](https://arxiv.org/abs/1802.05668)
+
+
+## Adaptive Quantization
+
+* [Adaptive Quantization of Neural Networks](https://openreview.net/forum?id=SyOK1Sg0W)
+
+
+## Gradient Quantization
+
+* SIGNSGD: compressed optimisation for non-convex problems
+* QSGD: Communication-Efficient SGD via Gradient Quantization and Encoding
+
+
+# Relaxed Quantization
+
+* BinaryRelax: A Relaxation Approach For Training Deep Neural Networks With Quantized Weights
+* PROXQUANT: QUANTIZED NEURAL NETWORKS VIA PROXIMAL OPERATORS
+
+## Specified Application
+
+* Quantized Convolutional Neural Networks for Mobile Devices
+
+
+## Hardware Perspective
+
+* Espresso: Efficient Forward Propagation for BCNNs
+
+## Unclassified
+
+* Scalable Methods for 8-bit Training of Neural Networks
+* Efficient end-to-end learning for quantizable representations ([code](https://github.com/maestrojeong/Deep-Hash-Table-ICML18)) !
+* Network Sketching: Exploiting Binary Structure in Deep CNNs
+* DNQ: Dynamic Network Quantization
+* Training Hard-Threshold Networks with Combinatorial Search in a Discrete Target Propagation Setting
+* An Empirical study of Binary Neural Networks' Optimisation
+* Heterogeneous Bitwidth Binarization in Convolutional Neural Networks
+* HitNet: Hybrid Ternary Recurrent Neural Network
+
+
+# Pruning
+
+## Structure Pruning
+
+- Structured Pruning of Neural Networks with Budget-Aware Regularization
+- Towards Optimal Structured CNN Pruning via Generative Adversarial Learning
+- Exploiting Kernel Sparsity and Entropy for Interpretable CNN Compression
+- Filter Pruning via Geometric Median for Deep Convolutional Neural Networks Acceleration
+  - Is pruning by absolute value meaningful?
+
+  
+
+## Element-wise Pruning
+
+- Learning both Weights and Connections for Efficient Neural Networks
+- Learning Sparse Neural Networks via Sensitivity-Driven Regularization
+- Learning to prune deep neural networks via layer-wise optimal brain surgeon
+- Dynamic Network Surgery
+
+## Activation / Feature Compression
+
+- Accelerating Convolutional Neural Networks via Activation Map Compression
+
+## Pruning Theory
+
+- Stronger generalization bounds for deep nets via a compression approach
+- DATA-DEPENDENT CORESETS FOR COMPRESSING NEURAL NETWORKS WITH APPLICATIONS TO GENERALIZATION BOUNDS
+
+# Network Factorization
+- Speeding up Convolutional Neural Networks with Low Rank Expansions
+- Trained Rank Pruning for Efficient Deep Neural Networks
+- Accelerating Very Deep Convolutional Networks for Classification and Detection
 
 
 # Efficient Model Design
@@ -68,83 +135,4 @@
 - SQUEEZENET: ALEXNET-LEVEL ACCURACY WITH 50X FEWER PARAMETERS AND <0.5MB MODEL SIZE
 - SqueezeNext: Hardware-Aware Neural Network Design
 - Xception: Deep Learning with Depthwise Separable Convolutions
-
-
-
-# Quantization Theory
-
-* Analysis of Quantized Models
-* On the Universal Approximability and Complexity Bounds of Quantized ReLU Neural Networks
-
-
-
-# Pruning Theory
-
-- Stronger generalization bounds for deep nets via a compression approach
-
-
-
-# Quantization with Distillation
-
-* [Model compression via distillation and quantization](https://arxiv.org/abs/1802.05668)
-
-
-
-# Adaptive Quantization
-
-* [Adaptive Quantization of Neural Networks](https://openreview.net/forum?id=SyOK1Sg0W)
-
-
-
-# Gradient Quantization
-
-* SIGNSGD: compressed optimisation for non-convex problems
-* QSGD: Communication-Efficient SGD via Gradient Quantization and Encoding
-
-
-
-# Relaxed Quantization
-
-* BinaryRelax: A Relaxation Approach For Training Deep Neural Networks With Quantized Weights
-
-
-
-# Specified Application
-
-* Quantized Convolutional Neural Networks for Mobile Devices
-
-
-
-# Hardware Prespective
-
-* Espresso: Efficient Forward Propagation for BCNNs
-
-
-
-# Structure Pruning
-
-- Structured Pruning of Neural Networks with Budget-Aware Regularization
-
-- Towards Optimal Structured CNN Pruning via Generative Adversarial Learning
-
-- Exploiting Kernel Sparsity and Entropy for Interpretable CNN Compression
-
-- Filter Pruning via Geometric Median for Deep Convolutional Neural Networks Acceleration
-
-  - Is pruning by absolute value meaningful?
-
-  
-
-# Element-wise Pruning
-
-
-
-# Network Factorization
-
-
-
-# Activation / Feature Compression
-
-- Accelerating Convolutional Neural Networks via Activation Map Compression
-- 
 

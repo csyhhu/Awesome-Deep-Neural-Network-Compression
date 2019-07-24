@@ -16,11 +16,11 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
  +  [By Conference](./Paper/PaperByConference.md)
  +  Survey
 ## Codes / Tools:
- + [My Implementation](./Codes/README.md): My re-implementation of state-of-the-art compression methods.
- + [XNOR in PyTorch](https://github.com/jiecaoyu/XNOR-Net-PyTorch): XNOR re-implementation by `PyTorch`.
+ + [My Implementation](./Codes): My re-implementation of state-of-the-art compression methods.
 ## Summary: 
 My summary (slides) for network compression. Some papers are chosen to be represented.
 * [Quantization Summary](./Summary/Quantization-Summary.pdf)
 * [Pruning Summary](./Summary/Prunning-Summary.pdf)
+* Theory: From basic convex optimization to quantization
 ## Compression System:
 * [PocketFlow](https://github.com/Tencent/PocketFlow)

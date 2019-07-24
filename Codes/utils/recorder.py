@@ -182,6 +182,15 @@ class Recorder():
             self.best_test_acc_top5 = 0
 
 
+    def restart_training(self):
+        """
+        Restart another training by resetting best test acc, optimizer
+        :return:
+        """
+        self.reset_best_test_acc()
+        self.reset_performance()
+
+
     def update_smallest_train_loss(self):
         self.smallest_training_loss = self.train_loss
         print('Current smallest training loss: %.3f' %self.smallest_training_loss)

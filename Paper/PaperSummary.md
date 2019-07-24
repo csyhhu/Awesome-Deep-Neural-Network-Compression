@@ -16,13 +16,13 @@
 
 ## Weights Ternarization
 
-- Trained Ternary Quantization
+- Trained Ternary Quantization [[code]](https://github.com/czhu95/ternarynet)
 
 ## Weights & Activation Quantization
 
 * Quantized Neural Networks Quantized Neural Networks: Training Neural Networks with Low Precision Weights and Activations
 * Binarized Neural Networks: Training Deep Neural Networks with Weights and Activations Constrained to +1 or -1
-* XNOR-Net: ImageNet Classification Using Binary Convolutional Neural Networks
+* XNOR-Net: ImageNet Classification Using Binary Convolutional Neural Networks [[codes]](https://github.com/jiecaoyu/XNOR-Net-PyTorch)
 * Bi-Real Net: Enhancing the Performance of 1-bit CNNs With Improved Representational Capability and Advanced Training Algorithm
 * LQ-Nets: Learned Quantization for Highly Accurate and Compact Deep Neural Networks
 
@@ -48,7 +48,6 @@
 * Analysis of Quantized Models
 * On the Universal Approximability and Complexity Bounds of Quantized ReLU Neural Networks
 
-
 ## Quantization with Distillation
 
 * [Model compression via distillation and quantization](https://arxiv.org/abs/1802.05668)
@@ -65,10 +64,12 @@
 * QSGD: Communication-Efficient SGD via Gradient Quantization and Encoding
 
 
-# Relaxed Quantization
+## Relaxed Quantization
 
+* Incremental Network Quantization [[code]](https://github.com/AojunZhou/Incremental-Network-Quantization/tree/master/src/caffe)
 * BinaryRelax: A Relaxation Approach For Training Deep Neural Networks With Quantized Weights
-* PROXQUANT: QUANTIZED NEURAL NETWORKS VIA PROXIMAL OPERATORS
+* ProxQuant: Quantized Neural Networks via Proximal Operators
+* Self-Binarizaing Networks
 
 ## Specified Application
 
@@ -82,7 +83,7 @@
 ## Unclassified
 
 * Scalable Methods for 8-bit Training of Neural Networks
-* Efficient end-to-end learning for quantizable representations ([code](https://github.com/maestrojeong/Deep-Hash-Table-ICML18)) !
+* Efficient end-to-end learning for quantizable representations ([code](https://github.com/maestrojeong/Deep-Hash-Table-ICML18))
 * Network Sketching: Exploiting Binary Structure in Deep CNNs
 * DNQ: Dynamic Network Quantization
 * Training Hard-Threshold Networks with Combinatorial Search in a Discrete Target Propagation Setting

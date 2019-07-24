@@ -2,13 +2,16 @@
 
 A repo for **my** re-implementation of state-of-the-art methods. Mostly written in `PyTorch`.
 
+This re-implementation is based on the published paper and released codes (if available). Details and tricks may be 
+different, which leads to the differences in final performance.
+
 Leave me an issue if you found anything wrong or want to contribute it.
 ## Methods
-- [X] [DoReFa](./DoReFa/README.md): [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](https://arxiv.org/abs/1606.06160)
-- [X] [BWN](./DoReFa/README.md): [XNOR-Net: ImageNet Classification Using Binary Convolutional Neural Networks](https://arxiv.org/abs/1603.05279)
-- [X] [TTQ](./TTQ/README.md): [Trained Ternary Quantization](https://arxiv.org/pdf/1612.01064v1.pdf)
-- [ ] [ExNN](./ExNN/README.md): [Extremely Low Bit Neural Network: Squeeze the Last Bit Out with ADMM](https://arxiv.org/abs/1707.09870)
-- [ ] INQ: [Incremental Network Quantization: Towards Lossless CNNs with Low-Precision Weights](https://arxiv.org/abs/1702.03044)
+- [X] [DoReFa](./DoReFa): [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](https://arxiv.org/abs/1606.06160)
+- [X] [BWN](./BWN): [XNOR-Net: ImageNet Classification Using Binary Convolutional Neural Networks](https://arxiv.org/abs/1603.05279)
+- [X] [TTQ](./TTQ): [Trained Ternary Quantization](https://arxiv.org/pdf/1612.01064v1.pdf)
+- [ ] [ExNN](./ExNN): [Extremely Low Bit Neural Network: Squeeze the Last Bit Out with ADMM](https://arxiv.org/abs/1707.09870)
+- [X] [INQ](./INQ): [Incremental Network Quantization: Towards Lossless CNNs with Low-Precision Weights](https://arxiv.org/abs/1702.03044)
 
 The following are my work:
 - [L-OBS](https://github.com/csyhhu/L-OBS) [NIPS2017] First author: [Xing Dong](http://www.simonxin.com/)

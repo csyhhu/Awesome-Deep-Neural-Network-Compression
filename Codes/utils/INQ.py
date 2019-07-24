@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from utils.miscellaneous import get_layer
+
 class Function_stopGradient(torch.autograd.Function):
 
     @staticmethod
@@ -56,15 +58,20 @@ class INQ_Linear(nn.Linear):
         return F.linear(x, self.mask_weight, self.bias)
 
 
-def quantize(param, bitW=5):
+def quantize(param, n1=-1, bitW=5):
     # Maximum index
-    n1 = torch.floor(torch.log2(4 * torch.max(param) / 3))
+    # n1 = torch.floor(torch.log2(4 * torch.max(torch.abs(param)) / 3))
     # Minmum index
-    n2 = n1 + 1 - 2**(bitW - 2)
+    # if bitW == 1:
+    #     n2 = n1 - 1
+    # else:
+    #     n2 = n1 + 1 - 2**(bitW - 1) / 2
+    n2 = n1 - bitW
+    # print('n2: %d' %n2)
     # for n in range(int(n2.numpy()), int(n1.numpy())):
     #     print(2**n)
     sign = torch.sign(param)
-    exponent = torch.clamp(torch.floor(torch.log2(torch.abs(param))), max=n1)
+    exponent = torch.clamp(torch.floor(torch.log2(torch.abs(param))), max=(n1-1)) # 2^n_1 is not accessiable
     # print(exponent)
     q_value = 2**exponent
     q_value[q_value < 2**n2] = 0
@@ -72,7 +79,7 @@ def quantize(param, bitW=5):
     return q_value
 
 
-def partition_quantize_weight(weight, mask, quant_ratio):
+def partition_quantize_weight(weight, mask, quant_ratio, n1=-1, bitW=5):
     """
     This function partition the remaining weights (1 in mask_grad_dict) into quantized part and fp part,
     then quantize corresponding part into 2^p
@@ -92,7 +99,7 @@ def partition_quantize_weight(weight, mask, quant_ratio):
     # Weights that be quantized
     quantized_weights = remaining_weights * quantized_index.float()
     # Quantized weight
-    q_weights = quantize(quantized_weights)
+    q_weights = quantize(quantized_weights, n1=n1, bitW=bitW)
     # First set quantized weights to 0, then add quantized weights back
     quantWeight = weight.clone()
     quantWeight[quantized_index] = 0
@@ -103,8 +110,98 @@ def partition_quantize_weight(weight, mask, quant_ratio):
     return quantWeight, new_mask
 
 
+def check_INQ_bits(net):
+
+    for (layer_name, layer_info) in net.layer_name_list:
+        weight = get_layer(net, layer_info).weight.data
+        n_unique = len(torch.unique(weight))
+        print('Number of unique bits in %s: %d' %(layer_name, n_unique))
+
+
+class testNet(nn.Module):
+    def __init__(self):
+        super(testNet, self).__init__()
+        self.conv1 = INQ_Conv2d(in_channels=3, out_channels=32, kernel_size=3)
+        self.layer_name_list = [['conv1', 'conv1']]
+
+        # self.conv1.weight.data.copy_(2 * (torch.rand([32, 3, 3, 3]) - 0.5))
+
+    def forward(self, x, mask):
+        return self.conv1(x, mask)
+
+
 if __name__ == '__main__':
 
-    weights = torch.rand([3, 32, 7, 7])
-    stopGradientMask = torch.ones(weights.shape)
-    quantWeight, new_mask = partition_quantize_weight(weights, stopGradientMask, 50)
+    # weights = 2*(torch.rand([10, 10]) - 0.5).cuda()
+    # stopGradientMask = torch.ones(weights.shape).cuda()
+    # quantWeight, new_mask = partition_quantize_weight(weights, stopGradientMask, 50)
+
+    net = testNet()
+    stopGradientMaskDict = dict()
+    n1_dict = dict()
+    for layer_name, layer_info in net.layer_name_list:
+        layer_weight = get_layer(net, layer_info).weight.data
+        stopGradientMaskDict[layer_name] = torch.ones(layer_weight.shape)
+        n1_dict[layer_name] = torch.floor(torch.log2(4 * torch.max(torch.abs(layer_weight)) / 3))
+
+    print('n1: ')
+    print(n1_dict)
+
+    print('1-th Weights before update')
+    print(net.conv1.weight.data[0, 0, :, :])
+
+    for layer_name, layer_info in net.layer_name_list:
+        layer_weight = get_layer(net, layer_info).weight
+        quantWeight, new_stopGradientMask = \
+            partition_quantize_weight(layer_weight.data,
+                                      stopGradientMaskDict[layer_name], n1=n1_dict[layer_name],
+                                      quant_ratio=50, bitW=1)
+        layer_weight.data.copy_(quantWeight)
+        stopGradientMaskDict[layer_name] = new_stopGradientMask
+
+    print('Mask')
+    print(stopGradientMaskDict['conv1'][0, 0, :, :])
+
+    for batch_idx in range(10):
+        inputs = torch.rand([10, 3, 32, 32])
+        targets = torch.rand([10, 32, 30, 30])
+
+        optimizer = torch.optim.SGD(net.parameters(), lr=1)
+        outputs = net(inputs, stopGradientMaskDict['conv1'])
+        losses = torch.nn.MSELoss()(outputs, targets)
+        optimizer.zero_grad()
+        losses.backward()
+        optimizer.step()
+
+    print('1-th Weights after update')
+    print(net.conv1.weight.data[0, 0, :, :])
+    print(len(torch.unique(net.conv1.weight.data)))
+
+    for layer_name, layer_info in net.layer_name_list:
+        layer_weight = get_layer(net, layer_info).weight
+        quantWeight, new_stopGradientMask = \
+            partition_quantize_weight(layer_weight.data,
+                                      stopGradientMaskDict[layer_name], n1=n1_dict[layer_name],
+                                      quant_ratio=100, bitW=1)
+        layer_weight.data.copy_(quantWeight)
+        stopGradientMaskDict[layer_name] = new_stopGradientMask
+
+    # print('Mask')
+    # print(stopGradientMaskDict['conv1'][0, 0, :, :])
+
+    ########################################################################
+
+    for batch_idx in range(10):
+        inputs = torch.rand([10, 3, 32, 32])
+        targets = torch.rand([10, 32, 30, 30])
+
+        optimizer = torch.optim.SGD(net.parameters(), lr=1)
+        outputs = net(inputs, stopGradientMaskDict['conv1'])
+        losses = torch.nn.MSELoss()(outputs, targets)
+        optimizer.zero_grad()
+        losses.backward()
+        optimizer.step()
+
+    print('2-th Weights after update')
+    print(net.conv1.weight.data[0, 0, :, :])
+    print(torch.unique(net.conv1.weight.data))

@@ -14,9 +14,10 @@ import torch.optim as optim
 
 from utils.dataset import get_dataloader, get_lmdb_imagenet
 from models.INQ_resnet import resnet20_cifar, resnet20_stl
-from utils.quantize import test
-from utils.train import accuracy
+from utils.INQ import partition_quantize_weight, check_INQ_bits
+from utils.train import accuracy, test
 from utils.recorder import Recorder
+from utils.miscellaneous import get_layer
 
 def boolean_string(s):
     if s not in {'False', 'True'}:
@@ -50,7 +51,7 @@ bitW = args.bitW
 print(args)
 input('Take a look')
 
-# Integer
+# Integerize the quantization portion
 for idx, quantize_portion in enumerate(quantize_portion_list):
     quantize_portion_list[idx] = int(quantize_portion)
 
@@ -65,15 +66,14 @@ elif dataset_name == 'ImageNet':
 else:
     raise NotImplementedError
 
-
 ###################
 # Initial Network #
 ###################
 if model_name == 'ResNet20':
     if dataset_name in ['CIFAR10', 'CIFAR100']:
-        net = resnet20_cifar(num_classes=num_classes, bitW=bitW)
+        net = resnet20_cifar(num_classes=num_classes)
     elif dataset_name in ['STL10']:
-        net = resnet20_stl(num_classes=num_classes, bitW=bitW)
+        net = resnet20_stl(num_classes=num_classes)
     else:
         raise NotImplementedError
     pretrain_path = '%s/%s-%s-pretrain.pth' % (save_root, model_name, dataset_name)
@@ -84,16 +84,6 @@ net.load_state_dict(torch.load(pretrain_path), strict=False)
 
 if use_cuda:
     net.cuda()
-
-if optimizer_type == 'SGD-M':
-    optimizer = optim.SGD(net.parameters(), lr=args.init_lr, momentum=0.9, weight_decay=5e-4)
-elif optimizer_type == 'SGD':
-    optimizer = optim.SGD(net.parameters(), lr=args.init_lr)
-elif optimizer_type in ['adam', 'Adam']:
-    optimizer = optim.Adam(net.parameters(), lr=args.init_lr)
-else:
-    raise NotImplementedError
-
 
 ################
 # Load Dataset #
@@ -108,7 +98,6 @@ if dataset_name == 'ImageNet':
 else:
     train_loader = get_dataloader(dataset_name, 'train', batch_size)
     test_loader = get_dataloader(dataset_name, 'test', 100)
-
 
 ####################
 # Initial Recorder #
@@ -131,42 +120,97 @@ else:
 
 recorder = Recorder(SummaryPath=SummaryPath, dataset_name=dataset_name)
 
-for epoch in range(MAX_EPOCH):
+################################
+# Initial stopGradientMaskDict #
+################################
+stopGradientMaskDict = dict()
+n1_dict = dict()
+for layer_name, layer_info  in net.layer_name_list:
+    layer_weight = get_layer(net, layer_info).weight.data
+    stopGradientMask = torch.ones(layer_weight.shape)
+    if use_cuda:
+        stopGradientMask = stopGradientMask.cuda()
+    stopGradientMaskDict[layer_name] = stopGradientMask
+    n1_dict[layer_name] = torch.floor(torch.log2(4 * torch.max(torch.abs(layer_weight)) / 3))
 
-    if recorder.stop:
-        break
 
-    net.train()
-    end = time.time()
+#############
+# Begin INQ #
+#############
+for idx, quantize_portion in enumerate(quantize_portion_list):
 
-    recorder.reset_performance()
+    print('%d-th incremental quantization with quantization portion as: %d' %(idx, quantize_portion))
 
-    print('Epoch: %d, lr: %e' %(epoch, optimizer.param_groups[0]['lr']))
+    # Quantize weights and generate new stopGradientMaskDict
+    for layer_name, layer_info in net.layer_name_list:
+        layer_weight = get_layer(net, layer_info).weight
+        quantWeight, new_stopGradientMask = \
+            partition_quantize_weight(layer_weight.data, stopGradientMaskDict[layer_name],
+                                      n1=n1_dict[layer_name], quant_ratio=quantize_portion, bitW=bitW)
+        layer_weight.data.copy_(quantWeight)
+        stopGradientMaskDict[layer_name] = new_stopGradientMask
 
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
+    #########
+    # Reset #
+    #########
+    recorder.smallest_training_loss = 1e9
+    recorder.reset_best_test_acc()
+    recorder.stop = False
 
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
+    if optimizer_type == 'SGD-M':
+        optimizer = optim.SGD(net.parameters(), lr=args.init_lr, momentum=0.9, weight_decay=5e-4)
+    elif optimizer_type == 'SGD':
+        optimizer = optim.SGD(net.parameters(), lr=args.init_lr)
+    elif optimizer_type in ['adam', 'Adam']:
+        optimizer = optim.Adam(net.parameters(), lr=args.init_lr)
+    else:
+        raise NotImplementedError
 
-        optimizer.zero_grad()
+    ###############################
+    # Train non-quantized weights #
+    ###############################
+    for epoch in range(MAX_EPOCH):
 
-        outputs = net(inputs, quantized=quantized)
-        losses = nn.CrossEntropyLoss()(outputs, targets)
-        losses.backward()
+        if recorder.stop:
+            break
 
-        optimizer.step()
-
-        recorder.update(loss=losses.item(), acc=accuracy(outputs.data, targets.data, (1, 5)),
-                        batch_size=outputs.shape[0], cur_lr=optimizer.param_groups[0]['lr'], end=end)
-
-        recorder.print_training_result(batch_idx, len(train_loader))
+        net.train()
         end = time.time()
 
-    test_acc = test(net, quantized_type=quantized, test_loader=test_loader, dataset_name=dataset_name)
+        recorder.reset_performance()
 
-    recorder.update(loss=None, acc=test_acc, batch_size=0, end=None, is_train=False)
-    # Adjust lr
-    recorder.adjust_lr(optimizer=optimizer)
+        print('Epoch: %d, lr: %e' %(epoch, optimizer.param_groups[0]['lr']))
 
-print('Best test acc: %s' %recorder.get_best_test_acc())
+        for batch_idx, (inputs, targets) in enumerate(train_loader):
+
+            if use_cuda:
+                inputs, targets = inputs.cuda(), targets.cuda()
+
+            optimizer.zero_grad()
+
+            outputs = net(inputs, stopGradientMaskDict=stopGradientMaskDict)
+            losses = nn.CrossEntropyLoss()(outputs, targets)
+            losses.backward()
+
+            optimizer.step()
+
+            recorder.update(loss=losses.item(), acc=accuracy(outputs.data, targets.data, (1, 5)),
+                            batch_size=outputs.shape[0], cur_lr=optimizer.param_groups[0]['lr'], end=end)
+
+            recorder.print_training_result(batch_idx, len(train_loader))
+            end = time.time()
+
+        test_acc = test(net, test_loader=test_loader, dataset_name=dataset_name)
+
+        recorder.update(loss=None, acc=test_acc, batch_size=0, end=None, is_train=False)
+        # Adjust lr
+        recorder.adjust_lr(optimizer=optimizer)
+
+    print('Best test acc: %s in quantization period %d' \
+          %(recorder.get_best_test_acc(), idx))
+
+print('Check INQ bits')
+check_INQ_bits(net)
+# print(net.conv1.weight.data[0,0,:,:])
+
 recorder.close()

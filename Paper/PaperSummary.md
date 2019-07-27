@@ -80,6 +80,11 @@
 
 * Espresso: Efficient Forward Propagation for BCNNs
 
+
+## Data-Free / Post-training Quantization
+* Data-Free Quantization through Weight Equalization and Bias Correction
+* Quantizing deep convolutional networks for efficient inference: A whitepaper
+
 ## Unclassified
 
 * Scalable Methods for 8-bit Training of Neural Networks

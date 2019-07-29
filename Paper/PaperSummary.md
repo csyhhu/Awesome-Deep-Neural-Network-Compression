@@ -84,6 +84,7 @@
 ## Data-Free / Post-training Quantization
 * Data-Free Quantization through Weight Equalization and Bias Correction
 * Quantizing deep convolutional networks for efficient inference: A whitepaper
+* Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference
 
 ## Unclassified
 

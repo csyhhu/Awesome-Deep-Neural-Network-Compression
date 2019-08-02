@@ -31,6 +31,10 @@
 * DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients
 * Training and Inference with Integers in Deep Neural Networks
 
+## Activation Quantization
+
+- PACT: PARAMETERIZED CLIPPING ACTIVATION FOR QUANTIZED NEURAL NETWORKS
+
 ## Non-symmetric Quantization
 
 * Weighted-Entropy-based Quantization for Deep Neural Networks

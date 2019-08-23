@@ -120,6 +120,7 @@
 - Learning Sparse Neural Networks via Sensitivity-Driven Regularization
 - Learning to prune deep neural networks via layer-wise optimal brain surgeon
 - Dynamic Network Surgery
+- Faster Gaze Prediction With Dense Networks and Fisher Pruning
 
 ## Activation / Feature Compression
 

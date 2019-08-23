@@ -87,7 +87,7 @@ def get_dataloader(dataset_name, split, batch_size, \
 
     elif dataset_name == 'CIFAR10':
 
-        data_root_list = ['/home/shangyu/datasets/CIFAR10']
+        data_root_list = ['/home/shangyu/datasets/CIFAR10', '/data/datasets/CIFAR10', '/home/sinno/datasets/CIFAR10']
 
         for data_root in data_root_list:
             if os.path.exists(data_root):

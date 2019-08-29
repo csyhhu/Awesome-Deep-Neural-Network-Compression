@@ -34,8 +34,9 @@ parser.add_argument('--dataset', '-d', type=str, default='CIFAR10', help='Datase
 parser.add_argument('--optimizer', '-o', type=str, default='Adam', help='Optimizer Method')
 parser.add_argument('--exp_spec', '-e', type=str, default='', help='Experiment Specification')
 parser.add_argument('--bitW', '-bw', type=int, default=2, help='Number of weights quantization')
-parser.add_argument('--bitA', '-ba', type=int, default=2, help='Number of activation quantization')
+parser.add_argument('--bitA', '-ba', type=int, default=32, help='Number of activation quantization')
 parser.add_argument('--init_lr', '-lr', type=float, default=1e-3, help='Initial Learning rate')
+parser.add_argument('--QIL_lr', '-qlr', type=float, default=1e-3, help='Initial Learning rate for learning QIL parameters')
 parser.add_argument('--n_epoch', '-n', type=int, default=100, help='Maximum training epochs')
 parser.add_argument('--lr_adjust', '-ad', type=str, default='dorefa', help='LR adjusting method')
 parser.add_argument('--batch_size', '-bs', type=int, default=128, help='Batch size')
@@ -101,7 +102,8 @@ for named, param in net.named_parameters():
         param_model.append(param)
 
 optimizer = optim.Adam(param_model, lr=args.init_lr)
-optimizer_QIL = optim.Adam(param_QIL, lr=1e-3, weight_decay=1)
+# optimizer_QIL = optim.Adam(param_QIL, lr=args.QIL_lr, weight_decay=1)
+optimizer_QIL = optim.SGD(param_QIL, lr=args.QIL_lr)
 
 ################
 # Load Dataset #
@@ -153,25 +155,36 @@ for epoch in range(MAX_EPOCH):
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
 
-        optimizer.zero_grad()
+        # optimizer.zero_grad()
         optimizer_QIL.zero_grad()
-
         outputs = net(inputs)
+
+        print('Old value: %e' % net.layer1[0].conv1.pruning_point.data)
+        print('cW: %e' % net.layer1[0].conv1.c_W)
+        print('dW: %e' % net.layer1[0].conv1.d_W)
+        print('Quantized Weight: %s' %net.layer1[0].conv1.quantized_weight[0,0,:,:])
+
         losses = nn.CrossEntropyLoss()(outputs, targets)
         losses.backward()
+        print('Loss: %e' %losses.item())
+        print('Gradient: %e' % net.layer1[0].conv1.pruning_point.grad)
 
-        optimizer.step()
+        # optimizer.step()
         optimizer_QIL.step()
+        # net.layer1[0].conv1.pruning_point.data += (net.layer1[0].conv1.pruning_point.grad)
 
         recorder.update(loss=losses.item(), acc=accuracy(outputs.data, targets.data, (1, 5)),
                         batch_size=outputs.shape[0], cur_lr=optimizer.param_groups[0]['lr'], end=end)
 
         selected_p = net.layer1[0].conv1.pruning_point.data
-        recorder.print_training_result(batch_idx, len(train_loader), append='%e' %(selected_p))
+        # recorder.print_training_result(batch_idx, len(train_loader), append='%e' %(selected_p))
         end = time.time()
 
-        if batch_idx == 1:
-            ds
+        # if batch_idx == 0:
+        #     ds
+        print('Updated value: %e' %net.layer1[0].conv1.pruning_point.data)
+        # print('%e' %net.layer1[0].conv1.pruning_point.grad)
+        input()
 
     test_acc = test(net, test_loader=test_loader, dataset_name=dataset_name)
 

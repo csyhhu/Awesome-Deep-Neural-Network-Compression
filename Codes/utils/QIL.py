@@ -33,8 +33,9 @@ class Function_STE(torch.autograd.Function):
     def forward(ctx, weight, bitW):
         ctx.save_for_backward(weight)
 
-        n = float(2 ** (bitW-1) - 1)
-        return torch.sign(weight) * torch.round(torch.abs(weight) * n) / n
+        n = float(2 ** (bitW) - 1)
+        # return torch.sign(weight) * torch.round(torch.abs(weight) * n) / n
+        return torch.round(weight * n) / n
 
     @staticmethod
     def backward(ctx, grad_outputs):
@@ -53,7 +54,8 @@ class QIL_CNN(nn.Conv2d):
 
         self.bitW = bitW
 
-        self.pruning_point = nn.Parameter(torch.zeros([])) # c_w - d_W
+        # self.pruning_point = nn.Parameter(torch.zeros([])) # c_w - d_W
+        self.pruning_point = nn.Parameter(torch.Tensor([0.0]))  # c_w - d_W
         self.clipping_point = nn.Parameter(torch.Tensor([1.0])) # c_w + d_W
         # c_W = 1/2 * (pruning_point + clipping_point), d_w = 1/2 * (clipping_point - pruning_point)
         # alpha_W = 0.5 / d_w, beta_w = -0.5 * c_W / d_W + 0.5
@@ -61,6 +63,11 @@ class QIL_CNN(nn.Conv2d):
 
         self.transformed_weight = None
         self.quantized_weight = None
+
+        self.c_W = None
+        self.d_W = None
+        self.alpha_W = None
+        self.beta_W = None
 
         self.use_cuda = torch.cuda.is_available()
 
@@ -72,10 +79,10 @@ class QIL_CNN(nn.Conv2d):
         # data_type = type(self.pruning_point.data)
         data_type = torch.cuda.FloatTensor if self.use_cuda else torch.FloatTensor
 
-        c_W = 0.5 * (self.pruning_point + self.clipping_point) # 0.5
-        d_W = 0.5 * (self.clipping_point - self.pruning_point) # 0.5
-        alpha_W = 0.5 / d_W # 1
-        beta_w = -0.5 * c_W / d_W + 0.5 # 0
+        self.c_W = 0.5 * (self.pruning_point + self.clipping_point) # 0.5
+        self.d_W = 0.5 * (self.clipping_point - self.pruning_point) # 0.5
+        self.alpha_W = 0.5 / self.d_W # 1
+        self.beta_W = -0.5 * self.c_W / self.d_W + 0.5 # 0
 
         # Weights fallen into [pruning_point, clipping_point]
         interval_weight = self.weight * \
@@ -84,7 +91,7 @@ class QIL_CNN(nn.Conv2d):
 
         self.transformed_weight = \
             torch.sign(self.weight) * (torch.abs(self.weight) > self.clipping_point).type(data_type) + \
-            torch.pow(alpha_W * torch.abs(interval_weight) + beta_w, self.gamma) * torch.sign(interval_weight)
+            torch.pow(self.alpha_W * torch.abs(interval_weight) +self.beta_W, self.gamma) * torch.sign(interval_weight)
 
         if quantize_type == 'interval':
             self.quantized_weight = Function_interval_quantize.apply(
@@ -93,7 +100,7 @@ class QIL_CNN(nn.Conv2d):
                 self.bitW
             )
         else:
-            self.quantized_weight = Function_STE.apply(self.transformed_weight, self.bitW)
+            self.quantized_weight = 2 * Function_STE.apply(0.5 * self.transformed_weight + 0.5, self.bitW) - 1
 
         return F.conv2d(x, self.quantized_weight, self.bias, self.stride,
                         self.padding, self.dilation, self.groups)

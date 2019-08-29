@@ -15,6 +15,11 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
  +  [By Topic](./Paper/PaperSummary.md) 
  +  [By Conference](./Paper/PaperByConference.md)
  +  Survey
+ 
+ + Related Topic:
+   - [Optimization](./)
+   - [Meta Learning](./Paper/Meta-Learning.md)
+
 ## Codes / Tools:
  + [My Implementation](./Codes): My re-implementation of state-of-the-art compression methods.
 ## Summary: 

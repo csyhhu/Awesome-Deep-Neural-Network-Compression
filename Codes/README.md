@@ -7,11 +7,18 @@ different, which leads to the differences in final performance.
 
 Leave me an issue if you found anything wrong or want to contribute it.
 ## Methods
+
+Finished:
+
 - [X] [DoReFa](./DoReFa): [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](https://arxiv.org/abs/1606.06160)
 - [X] [BWN](./BWN): [XNOR-Net: ImageNet Classification Using Binary Convolutional Neural Networks](https://arxiv.org/abs/1603.05279)
 - [X] [TTQ](./TTQ): [Trained Ternary Quantization](https://arxiv.org/pdf/1612.01064v1.pdf)
+
+Unfinished:
+
 - [ ] [ExNN](./ExNN): [Extremely Low Bit Neural Network: Squeeze the Last Bit Out with ADMM](https://arxiv.org/abs/1707.09870)
-- [X] [INQ](./INQ): [Incremental Network Quantization: Towards Lossless CNNs with Low-Precision Weights](https://arxiv.org/abs/1702.03044)
+- [ ] [INQ](./INQ): [Incremental Network Quantization: Towards Lossless CNNs with Low-Precision Weights](https://arxiv.org/abs/1702.03044)
+- [ ] [QIL](./QIL): [Learning to Quantize Deep Networks by Optimizing Quantization Intervals with Task Loss](https://arxiv.org/abs/1808.05779) 
 
 The following are my work:
 - [L-OBS](https://github.com/csyhhu/L-OBS) [NIPS2017] First author: [Xing Dong](http://www.simonxin.com/)

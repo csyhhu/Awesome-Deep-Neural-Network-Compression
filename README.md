@@ -12,7 +12,12 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
  and so on.
 
 ## Paper:
- +  [By Topic](./Paper/PaperSummary.md) 
+ +  By Topic:
+    
+    - [Quantization](./Paper/Quantization.md)
+    - [Pruning](./Paper/Pruning.md)
+    - [Efficient Model Design](./Paper/Efficient-Model-Design.md)
+    
  +  [By Conference](./Paper/PaperByConference.md)
  +  Survey
  

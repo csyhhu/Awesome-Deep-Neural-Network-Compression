@@ -75,7 +75,7 @@ class FBS_Linear(nn.Linear):
 
         self.saliency = torch.abs(self.saliency_predictor(torch.abs(x)))
 
-        threshold = self.saliency.topk(dim=1, k=int(np.round(self.out_channels * CR)))[0][:, -1]
+        threshold = self.saliency.topk(dim=1, k=int(np.round(self.out_features * CR)))[0][:, -1]
 
         self.sparse_output_masks = \
             self.saliency * (self.saliency > threshold.view(-1, 1)).type(self.data_type)
@@ -88,11 +88,16 @@ class testNet(nn.Module):
 
     def __init__(self):
         super(testNet, self).__init__()
-        self.conv1 = FBS_CNN(3, 32, 5, 1, 2)
+        self.conv1 = FBS_CNN(3, 3, 5, 1, 2)
+        self.fc1 = FBS_Linear(in_features=3*32*32, out_features=10)
 
     def forward(self, x):
 
-        return self.conv1(x)
+        x = self.conv1(x)
+        print(x.shape)
+        x = x.view(-1, 3*32*32)
+        x = self.fc1(x)
+        return x
 
 
 def test(net, CR, test_loader, use_cuda = True, dataset_name='CIFAR10', n_batches_used=None):
@@ -163,5 +168,5 @@ if __name__ == '__main__':
     net = testNet().cuda()
     inputs = torch.rand([10, 3, 32, 32]).cuda()
     outputs = net(inputs)
-    losses = torch.nn.MSELoss()(outputs, torch.rand([10, 32, 32, 32]).cuda())
+    losses = torch.nn.MSELoss()(outputs, torch.rand([10, 10]).cuda())
     losses.backward()

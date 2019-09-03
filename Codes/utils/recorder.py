@@ -184,11 +184,13 @@ class Recorder():
 
     def restart_training(self):
         """
-        Restart another training by resetting best test acc, optimizer
+        Restart another training by resetting best test acc, min training loss, stop training flag
         :return:
         """
         self.reset_best_test_acc()
-        self.reset_performance()
+        self.smallest_training_loss = 1e9
+        self.stop = False
+        # self.reset_performance()
 
 
     def update_smallest_train_loss(self):

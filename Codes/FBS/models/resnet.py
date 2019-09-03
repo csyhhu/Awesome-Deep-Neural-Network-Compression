@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import math
 
-from FBS_utils.module import FBS_CNN
+from FBS_utils.module import FBS_CNN, FBS_Linear
 
 
 def conv3x3(in_planes, out_planes, stride=1):
@@ -109,7 +109,7 @@ class ResNet_Cifar(nn.Module):
     def __init__(self, block, layers, num_classes=10, first_stride=1):
         super(ResNet_Cifar, self).__init__()
         self.inplanes = 16
-        self.layer_name_list = [['conv1', 'conv1'], ['fc', 'fc']]
+        self.layer_name_list = [['conv1', ['conv1']], ['fc', ['fc']]]
 
         self.conv1 = FBS_CNN(3, 16, kernel_size=3, stride=first_stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(16)
@@ -118,6 +118,7 @@ class ResNet_Cifar(nn.Module):
         self.layer2 = self._make_layer(block, 32, layers[1], stride=2, layer_idx=2)
         self.layer3 = self._make_layer(block, 64, layers[2], stride=2, layer_idx=3)
         self.avgpool = nn.AvgPool2d(8, stride=1)
+        # self.fc = FBS_Linear(64 * block.expansion, num_classes)
         self.fc = nn.Linear(64 * block.expansion, num_classes)
 
         for m in self.modules():
@@ -132,7 +133,7 @@ class ResNet_Cifar(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion,
+                FBS_CNN(self.inplanes, planes * block.expansion,
                               kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(planes * block.expansion)
             )
@@ -151,6 +152,7 @@ class ResNet_Cifar(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x, CR=0.5):
+
         x = self.conv1(x, CR)
         x = self.bn1(x)
         x = self.relu(x)
@@ -165,6 +167,7 @@ class ResNet_Cifar(nn.Module):
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
+        # x = self.fc(x, CR)
         x = self.fc(x)
 
         return x

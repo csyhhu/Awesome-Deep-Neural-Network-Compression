@@ -17,8 +17,9 @@ import torch.optim as optim
 from utils.dataset import get_dataloader, get_lmdb_imagenet
 from utils.train import accuracy
 from utils.recorder import Recorder
+from utils.miscellaneous import get_layer
 
-from FBS_utils.module import test
+from FBS_utils.module import test, FBS_CNN, FBS_Linear
 from models.resnet import resnet20_cifar
 
 # from tensorboardX import SummaryWriter
@@ -33,6 +34,7 @@ parser = argparse.ArgumentParser(description='Approximation Training')
 parser.add_argument('--model', '-m', type=str, default='ResNet20', help='Model Arch')
 parser.add_argument('--dataset', '-d', type=str, default='CIFAR10', help='Dataset')
 parser.add_argument('--CR', '-CR', type=float, default=0.5, help='Desired CR')
+parser.add_argument('--saliency_penalty', '-sp', type=float, default=1e-8, help='LR adjusting method')
 parser.add_argument('--optimizer', '-o', type=str, default='Adam', help='Optimizer Method')
 parser.add_argument('--exp_spec', '-e', type=str, default='', help='Experiment Specification')
 parser.add_argument('--init_lr', '-lr', type=float, default=1e-3, help='Initial Learning rate')
@@ -51,6 +53,7 @@ optimizer_type = args.optimizer # ['SGD', 'SGD-M', 'adam']
 dataset_type = 'large' if dataset_name in ['ImageNet'] else 'small'
 lr_adjust = args.lr_adjust
 batch_size = args.batch_size
+saliency_penalty = args.saliency_penalty
 # ------------------------------------------
 
 print(args)
@@ -125,10 +128,13 @@ for cur_CR in CR_range:
     else:
         raise NotImplementedError
 
-    ##########################
-    # Reset Best Performance #
-    ##########################
-    recorder.reset_best_test_acc()
+    ####################
+    # Restart Training #
+    ####################
+    # recorder.reset_best_test_acc()
+    # recorder.reset_performance()
+    # recorder.stop = False
+    recorder.restart_training()
 
     for epoch in range(MAX_EPOCH):
 
@@ -148,6 +154,13 @@ for cur_CR in CR_range:
             optimizer.zero_grad()
             outputs = net(inputs, cur_CR)
             losses = nn.CrossEntropyLoss()(outputs, targets)
+
+            for layer_name, layer_idx in net.layer_name_list:
+                layer = get_layer(net, layer_idx)
+                if isinstance(layer, FBS_CNN) or isinstance(layer, FBS_Linear):
+                    saliency = torch.sum(layer.saliency)
+                    losses += (saliency_penalty * saliency)
+
             losses.backward()
             optimizer.step()
 

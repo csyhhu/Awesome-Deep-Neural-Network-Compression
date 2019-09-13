@@ -1,6 +1,5 @@
 """
-Experimental implementation of
-
+Experimental implementation of Dynamic Channel Pruning: Feature Boosting and Suppression
 """
 
 import os

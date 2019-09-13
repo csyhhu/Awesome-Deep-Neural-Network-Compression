@@ -13,6 +13,7 @@ Finished:
 - [X] [DoReFa](./DoReFa): [DoReFa-Net: Training Low Bitwidth Convolutional Neural Networks with Low Bitwidth Gradients](https://arxiv.org/abs/1606.06160)
 - [X] [BWN](./BWN): [XNOR-Net: ImageNet Classification Using Binary Convolutional Neural Networks](https://arxiv.org/abs/1603.05279)
 - [X] [TTQ](./TTQ): [Trained Ternary Quantization](https://arxiv.org/pdf/1612.01064v1.pdf)
+- [X] [FBS](./FBS): [Dynamic Channel Pruning: Feature Boosting and Suppression](https://arxiv.org/abs/1810.05331)
 
 Unfinished:
 
@@ -21,10 +22,10 @@ Unfinished:
 - [ ] [QIL](./QIL): [Learning to Quantize Deep Networks by Optimizing Quantization Intervals with Task Loss](https://arxiv.org/abs/1808.05779) 
 
 The following are my work:
-- [L-OBS](https://github.com/csyhhu/L-OBS) [NIPS2017] First author: [Xing Dong](http://www.simonxin.com/)
-- [L-DNQ](https://github.com/csyhhu/L-DNQ) [AAAI2019] Co-work with: [Wenya Wang](https://www.ntu.edu.sg/home/wangwy/), [Sinno Jialin Pan](https://www.ntu.edu.sg/home/sinnopan/)
-- [Co-Prune](https://github.com/csyhhu/Co-Prune) [IJCAI2019] Co-work with: [Wenya Wang](https://www.ntu.edu.sg/home/wangwy/), [Sinno Jialin Pan](https://www.ntu.edu.sg/home/sinnopan/)
-
+- [L-OBS](https://github.com/csyhhu/L-OBS) [NIPS 2017] First author: [Xing Dong](http://www.simonxin.com/)
+- [L-DNQ](https://github.com/csyhhu/L-DNQ) [AAAI 2019] Co-work with: [Wenya Wang](https://www.ntu.edu.sg/home/wangwy/), [Sinno Jialin Pan](https://www.ntu.edu.sg/home/sinnopan/)
+- [Co-Prune](https://github.com/csyhhu/Co-Prune) [IJCAI 2019] Co-work with: [Wenya Wang](https://www.ntu.edu.sg/home/wangwy/), [Sinno Jialin Pan](https://www.ntu.edu.sg/home/sinnopan/)
+- [Meta-Quant](https://github.com/csyhhu/Meta-Quant)[NeurIPS 2019] Co-work with: [Wenya Wang](https://www.ntu.edu.sg/home/wangwy/), [Sinno Jialin Pan](https://www.ntu.edu.sg/home/sinnopan/)
 
 ## How to use them
 Please check the detailed description in each folder. However, here is some setting that most codes will use:

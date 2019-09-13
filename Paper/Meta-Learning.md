@@ -4,6 +4,7 @@
 - Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks
 - Task-Agnostic Meta-Learning for Few-shot Learning
 - On First-Order Meta-Learning Algorithm
+- Gradient-Based Meta-Learning with Learned Layerwise Metric and Subspace
 
 ## Meta-Learning in Gradient
 - Learning to Learn by Gradient Descent by Gradient Descent

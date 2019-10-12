@@ -5,6 +5,7 @@
 - Task-Agnostic Meta-Learning for Few-shot Learning
 - On First-Order Meta-Learning Algorithm
 - Gradient-Based Meta-Learning with Learned Layerwise Metric and Subspace
+- Meta-Learning with Latent Embedding Optimization (ICLR2019)
 
 ## Meta-Learning in Gradient
 - Learning to Learn by Gradient Descent by Gradient Descent

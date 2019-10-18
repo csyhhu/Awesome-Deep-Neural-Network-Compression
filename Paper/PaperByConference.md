@@ -29,6 +29,10 @@
 - Same, Same But Different-Recovering Neural Network Quantization Error Through Weight Factorization
 - Parameter Efficient Training of Deep Convolutional Neural Networks by Dynamic Sparse Reparameterization
 - Variational inference for sparse network reconstruction from count data
+- Collaborative Channel Pruning for Deep Networks
+
+## ICLR
+- Understanding Straight-Through Estimator in Training Activation Quantized Neural Nets
 
 
 # 2018

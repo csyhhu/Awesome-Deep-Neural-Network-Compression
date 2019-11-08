@@ -33,7 +33,7 @@
 
 ## ICLR
 - Understanding Straight-Through Estimator in Training Activation Quantized Neural Nets
-
+- Minimal Random Code Learning: Getting Bits back from Compressed Model Parameters
 
 # 2018
 

@@ -1,6 +1,10 @@
 # Meta-Learning
 # By Conference
 ## 2019
+
+### NeurIPS
+- Meta-Learning Representations for Continual Learning
+- Meta-Learning with Implicit Gradients
 ### ICML 
 - Learning What and Where to Transfer
 

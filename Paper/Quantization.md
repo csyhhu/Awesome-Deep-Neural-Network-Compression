@@ -1,7 +1,5 @@
 # Quantization
 
-## Weights Quantization
-
 * BinaryConnect: Training Deep Neural Networks with binary weights during propagations
 * Extremely Low Bit Neural Network: Squeeze the Last Bit Out with ADMM
 * [Loss-aware Binarization of Deep Networks](https://arxiv.org/abs/1611.01600)
@@ -13,6 +11,15 @@
 * Explicit Loss-Error-Aware Quantization for Low-Bit Deep Neural Networks
 * Value-aware Quantization for Training and Inference of Neural Networks
 * Training Competitive Binary Neural Networks from Scratch
+*  Linear Symmetric Quantization of Neural Networks for Low-precision Integer Hardware 
+- AutoQ: Automated Kernel-Wise Neural Network Quantization 
+- Additive Powers-of-Two Quantization: A Non-uniform Discretization for Neural Networks
+- Learned Step Size Quantization
+- Sampling-Free Learning of Bayesian Quantized Neural Networks
+- Gradient $\ell_1$ Regularization for Quantization Robustness
+- BinaryDuo: Reducing Gradient Mismatch in Binary Activation Network by Coupling Binary Activations 
+- Training binary neural networks with real-to-binary convolutions 
+- Critical initialisation in continuous approximations of binary neural networks 
 
 ## Weights Ternarization
 

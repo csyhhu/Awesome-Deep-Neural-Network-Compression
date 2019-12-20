@@ -1,6 +1,13 @@
 # Pruning
 
-## Element-wise Pruning
+- Comparing Fine-tuning and Rewinding in Neural Network Pruning
+- A Signal Propagation Perspective for Pruning Neural Networks at Initialization 
+- Data-Independent Neural Pruning via Coresets
+- One-Shot Pruning of Recurrent Neural Networks by Jacobian Spectrum Evaluation 
+- Lookahead: A Far-sighted Alternative of Magnitude-based Pruning
+- Dynamic Model Pruning with Feedback 
+
+## Unstructure Pruning
 
 - Learning both Weights and Connections for Efficient Neural Networks
 - Learning Sparse Neural Networks via Sensitivity-Driven Regularization
@@ -27,6 +34,7 @@
 - Towards Optimal Structured CNN Pruning via Generative Adversarial Learning
 - Exploiting Kernel Sparsity and Entropy for Interpretable CNN Compression
 - Learning To Share: Simultaneous Parameter Tying and Sparsification in Deep Learning
+- Provable Filter Pruning for Efficient Neural Networks 
 
 ## Sharing-based Pruning
 - Filter Pruning via Geometric Median for Deep Convolutional Neural Networks Acceleration
@@ -53,4 +61,7 @@ Pruning is conducted based on input features.
 
 - Stronger generalization bounds for deep nets via a compression approach
 - Data-Dependent Coresets for Compressing Neural Networks with Applications to Generalization Bounds
+
+## Robust (Adversarial) Pruning
+- Sparse DNNs with improved adversarial robustness
 

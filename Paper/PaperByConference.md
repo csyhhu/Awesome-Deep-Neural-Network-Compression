@@ -1,3 +1,26 @@
+# 2020
+
+## ICLR
+
+### Pruning
+- Comparing Fine-tuning and Rewinding in Neural Network Pruning
+- A Signal Propagation Perspective for Pruning Neural Networks at Initialization 
+- Data-Independent Neural Pruning via Coresets
+- One-Shot Pruning of Recurrent Neural Networks by Jacobian Spectrum Evaluation 
+- Lookahead: A Far-sighted Alternative of Magnitude-based Pruning
+- Dynamic Model Pruning with Feedback 
+
+### Quantization
+- Linear Symmetric Quantization of Neural Networks for Low-precision Integer Hardware 
+- AutoQ: Automated Kernel-Wise Neural Network Quantization 
+- Additive Powers-of-Two Quantization: A Non-uniform Discretization for Neural Networks
+- Learned Step Size Quantization
+- Sampling-Free Learning of Bayesian Quantized Neural Networks
+- Gradient $\ell_1$ Regularization for Quantization Robustness
+- BinaryDuo: Reducing Gradient Mismatch in Binary Activation Network by Coupling Binary Activations 
+- Training binary neural networks with real-to-binary convolutions 
+- Critical initialisation in continuous approximations of binary neural networks 
+
 # 2019
 
 ## NeurIPS

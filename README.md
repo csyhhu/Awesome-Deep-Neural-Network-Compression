@@ -6,7 +6,7 @@
 # Awesome Deep Neural Network Compression
 Paper collection, Summary, Code for Deep Neural Network Compression, including:
  - Quantization, 
- - Pruning (element-wise, structure), 
+ - Pruning (Unstructure, structure), 
  - Distillation 
  
  and so on.
@@ -18,7 +18,11 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
     - [Pruning](./Paper/Pruning.md)
     - [Efficient Model Design](./Paper/Efficient-Model-Design.md)
     
- +  [By Conference](./Paper/PaperByConference.md)
+ +  [By Conference](./Paper/PaperByConference.md):
+ 
+	- [2020](./Paper/Conference/2020.md)
+    - [2019](./Paper/Conference/2019.md)
+    
  +  Survey
  
  + Related Topic:

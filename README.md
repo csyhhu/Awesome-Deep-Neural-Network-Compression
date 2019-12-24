@@ -17,6 +17,7 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
     - [Quantization](./Paper/Quantization.md)
     - [Pruning](./Paper/Pruning.md)
     - [Efficient Model Design](./Paper/Efficient-Model-Design.md)
+    - [Network Architecture Search (NAS) for Model Compression](./Paper/NAS.md)
     
  +  [By Conference](./Paper/PaperByConference.md):
  

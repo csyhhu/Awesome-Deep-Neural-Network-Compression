@@ -20,10 +20,31 @@
 - BinaryDuo: Reducing Gradient Mismatch in Binary Activation Network by Coupling Binary Activations 
 - Training binary neural networks with real-to-binary convolutions 
 - Critical initialisation in continuous approximations of binary neural networks 
-
-## Weights Ternarization
-
 - Trained Ternary Quantization [[code]](https://github.com/czhu95/ternarynet)
+- MetaQuant: Learning to Quantize by Learning to Penetrate Non-differentiable Quantization [[paper]](https://github.com/csyhhu/MetaQuant/blob/master/MetaQuant-Preprint.pdf) [[codes]](https://github.com/csyhhu/MetaQuant)
+- Latent Weights Do Not Exist: Rethinking Binarized Neural Network Optimization [[paper]](https://papers.nips.cc/paper/8971-latent-weights-do-not-exist-rethinking-binarized-neural-network-optimization.pdf)
+- Fully Quantized Network for Object Detection
+- Learning to Quantize Deep Networks by Optimizing Quantization Intervals With Task Loss
+- Quantization Networks
+- SeerNet: Predicting Convolutional Neural Network Feature-Map Sparsity Through Low-Bit Quantization
+- Simultaneously Optimizing Weight and Quantizer of Ternary Neural Network Using Truncated Gaussian Approximation
+- Binary Ensemble Neural Network: More Bits per Network or More Networks per Bit?
+- A Main/Subsidiary Network Framework for Simplifying Binary Neural Networks
+- Regularizing Activation Distribution for Training Binarized Deep Networks
+- Structured Binary Neural Networks for Accurate Image Classification and Semantic Segmentation
+- Learning Channel-Wise Interactions for Binary Convolutional Neural Networks
+- Circulant Binary Convolutional Networks: Enhancing the Performance of 1-Bit DCNNs With Circulant Back Propagation
+- Differentiable Soft Quantization: Bridging Full-Precision and Low-Bit Neural Networks
+- Proximal Mean-Field for Neural Network Quantization
+- Relaxed Quantization for Discretized Neural Networks
+- ProxQuant: Quantized Neural Networks via Proximal Operators 
+- Per-Tensor Fixed-Point Quantization of the Back-Propagation Algorithm
+- Defensive Quantization: When Efficiency Meets Robustness
+- Learning Recurrent Binary/Ternary Weights 
+- Combinatorial Attacks on Binarized Neural Networks
+- ARM: Augment-REINFORCE-Merge Gradient for Stochastic Binary Networks 
+- An Empirical study of Binary Neural Networks' Optimisation 
+- Integer Networks for Data Compression with Latent-Variable Models 
 
 ## Weights & Activation Quantization
 
@@ -40,7 +61,7 @@
 
 ## Activation Quantization
 
-- PACT: PARAMETERIZED CLIPPING ACTIVATION FOR QUANTIZED NEURAL NETWORKS
+- PACT: Parameterized Clipping Activation for Quantized Neural Networks
 
 ## Non-symmetric Quantization
 
@@ -58,6 +79,10 @@
 
 * Analysis of Quantized Models
 * On the Universal Approximability and Complexity Bounds of Quantized ReLU Neural Networks
+- Dimension-Free Bounds for Low-Precision Training [[paper]](https://papers.nips.cc/paper/9346-dimension-free-bounds-for-low-precision-training.pdf)
+- A Mean Field Theory of Quantized Deep Networks: The Quantization-Depth Trade-Off [[paper]](https://arxiv.org/pdf/1906.00771.pdf)
+- On the Universal Approximability and Complexity Bounds of Quantized ReLU Neural Networks 
+- Understanding Straight-Through Estimator in Training Activation Quantized Neural Nets
 
 ## Quantization with Distillation
 
@@ -73,6 +98,7 @@
 
 * SIGNSGD: compressed optimisation for non-convex problems
 * QSGD: Communication-Efficient SGD via Gradient Quantization and Encoding
+- Qsparse-local-SGD: Distributed SGD with Quantization, Sparsification, and Local Computations [[paper]](https://arxiv.org/pdf/1906.02367.pdf)
 
 
 ## Relaxed Quantization
@@ -87,16 +113,20 @@
 * Quantized Convolutional Neural Networks for Mobile Devices
 
 
-## Hardware Perspective
+## Co-Design (Hardware/Energy/Memory)
 
 * Espresso: Efficient Forward Propagation for BCNNs
-
-
+- HAQ: Hardware-Aware Automated Quantization With Mixed Precision
+- ECC: Platform-Independent Energy-Constrained Deep Neural Network Compression via a Bilinear Regression Model
+- Double Viterbi: Weight Encoding for High Compression Ratio and Fast On-Chip Reconstruction for Deep Neural Network 
+- Energy-Constrained Compression for Deep Neural Networks via Weighted Sparse Projection and Layer Input Masking 
 ## Data-Free / Post-training Quantization
 * Data-Free Quantization through Weight Equalization and Bias Correction
 * Quantizing deep convolutional networks for efficient inference: A whitepaper
 * Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference
-
+- Post-training 4-bit quantization of convolution networks for rapid-deployment
+- Improving Neural Network Quantization without Retraining using Outlier Channel Splitting
+- Same, Same But Different: Recovering Neural Network Quantization Error Through Weight Factorization
 ## Unclassified
 
 * Scalable Methods for 8-bit Training of Neural Networks

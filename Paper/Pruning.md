@@ -2,10 +2,9 @@
 
 - Comparing Fine-tuning and Rewinding in Neural Network Pruning
 - A Signal Propagation Perspective for Pruning Neural Networks at Initialization 
-- Data-Independent Neural Pruning via Coresets
-- One-Shot Pruning of Recurrent Neural Networks by Jacobian Spectrum Evaluation 
-- Lookahead: A Far-sighted Alternative of Magnitude-based Pruning
+- Data-Independent Neural Pruning via Coresets 
 - Dynamic Model Pruning with Feedback 
+- Parameter efficient training of deep convolutional neural networks by dynamic sparse reparameterization
 
 ## Unstructure Pruning
 
@@ -15,6 +14,7 @@
 - Dynamic Network Surgery
 - Faster Gaze Prediction With Dense Networks and Fisher Pruning
 - WSNet: Compact and Efficient Networks Through Weight Sampling
+- Lookahead: A Far-sighted Alternative of Magnitude-based Pruning
 
 ## Structure Pruning
 
@@ -61,7 +61,12 @@ Pruning is conducted based on input features.
 
 - Stronger generalization bounds for deep nets via a compression approach
 - Data-Dependent Coresets for Compressing Neural Networks with Applications to Generalization Bounds
+- Dynamic Model Pruning with Feedback 
+	+ Theoretical analysis of Dynamic Network Surgery?
 
 ## Robust (Adversarial) Pruning
 - Sparse DNNs with improved adversarial robustness
 
+## RNN Pruning
+- Learning Intrinsic Sparse Structures within Long Short-Term Memory
+- One-Shot Pruning of Recurrent Neural Networks by Jacobian Spectrum Evaluation 

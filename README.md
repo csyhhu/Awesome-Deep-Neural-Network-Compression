@@ -18,11 +18,14 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
     - [Pruning](./Paper/Pruning.md)
     - [Efficient Model Design](./Paper/Efficient-Model-Design.md)
     - [Network Architecture Search (NAS) for Model Compression](./Paper/NAS.md)
+    - [Compression Meets Robustness (Adversarial)](./Paper/Robust-Compression.md)
+    - [NLP Compression](./Paper/NLP-Compression.md)
     
  +  [By Conference](./Paper/PaperByConference.md):
  
 	- [2020](./Paper/Conference/2020.md)
     - [2019](./Paper/Conference/2019.md)
+    - [2018](./Paper/Conference/2018.md)
     
  +  Survey
  

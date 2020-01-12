@@ -109,17 +109,16 @@
 * Self-Binarizaing Networks
 
 ## Specified Application
-
 * Quantized Convolutional Neural Networks for Mobile Devices
 
 
 ## Co-Design (Hardware/Energy/Memory)
-
 * Espresso: Efficient Forward Propagation for BCNNs
 - HAQ: Hardware-Aware Automated Quantization With Mixed Precision
 - ECC: Platform-Independent Energy-Constrained Deep Neural Network Compression via a Bilinear Regression Model
 - Double Viterbi: Weight Encoding for High Compression Ratio and Fast On-Chip Reconstruction for Deep Neural Network 
 - Energy-Constrained Compression for Deep Neural Networks via Weighted Sparse Projection and Layer Input Masking 
+
 ## Data-Free / Post-training Quantization
 * Data-Free Quantization through Weight Equalization and Bias Correction
 * Quantizing deep convolutional networks for efficient inference: A whitepaper
@@ -127,8 +126,12 @@
 - Post-training 4-bit quantization of convolution networks for rapid-deployment
 - Improving Neural Network Quantization without Retraining using Outlier Channel Splitting
 - Same, Same But Different: Recovering Neural Network Quantization Error Through Weight Factorization
-## Unclassified
 
+## Parameterized Quantizer
+- Learned Step Size Quantization
+- Mixed Precision DNNs: All you need is a good parametrization
+
+## Unclassified
 * Scalable Methods for 8-bit Training of Neural Networks
 * Efficient end-to-end learning for quantizable representations ([code](https://github.com/maestrojeong/Deep-Hash-Table-ICML18))
 * Network Sketching: Exploiting Binary Structure in Deep CNNs

@@ -41,6 +41,9 @@
   - Is pruning by absolute value meaningful?
 - Cross Domain Model Compression by Structurally Weight Sharing
 
+## Spectral (Frequency domain) Pruning
+- Frequency-Domain Dynamic Pruning for Convolutional Neural Networks
+
 
 ## Dynamic Pruning
 

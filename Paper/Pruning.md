@@ -59,6 +59,7 @@ Pruning is conducted based on input features.
 - Speeding up Convolutional Neural Networks with Low Rank Expansions
 - Trained Rank Pruning for Efficient Deep Neural Networks
 - Accelerating Very Deep Convolutional Networks for Classification and Detection
+- Learning Compact Recurrent Neural Networks with Block-Term Tensor Decomposition
 
 ## Pruning Theory
 

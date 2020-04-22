@@ -127,6 +127,15 @@ class AverageMeter(object):
         self.avg = float(self.sum) / float(self.count)
 
 
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
+
 def adjust_learning_rate(optimizer, epoch, init_lr=1e-3, decrease_epoch=5):
     """Sets the learning rate to the initial LR decayed by 10 every decrease_epoch epochs"""
     lr = init_lr * (0.1 ** (epoch // decrease_epoch))
@@ -136,6 +145,15 @@ def adjust_learning_rate(optimizer, epoch, init_lr=1e-3, decrease_epoch=5):
 
 
 def test(net, test_loader, use_cuda = True, dataset_name='CIFAR10', n_batches_used=None):
+    """
+    A basic test function for forward without additional arguments
+    :param net:
+    :param test_loader:
+    :param use_cuda:
+    :param dataset_name:
+    :param n_batches_used:
+    :return:
+    """
 
     net.eval()
 

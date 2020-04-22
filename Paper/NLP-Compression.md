@@ -16,6 +16,8 @@
 - BERT-of-Theseus: Compressing BERT by Progressive Module Replacing
 - Analyzing Multi-Head Self-Attention: Specialized Heads Do the Heavy Lifting, the Rest Can Be Pruned
 - Are Sixteen Heads Really Better than One?
+- Structured Pruning of Large Language Models
+- Pruning a BERT-based Question Answering Model
 
 
 ### Distillation
@@ -24,6 +26,7 @@
 
 ### Tensorization
 - A Tensorized Transformer for Language Modeling
+- Low-Rank Bottleneck in Multi-head Attention Models
 
 
 ### Comprehensive Study

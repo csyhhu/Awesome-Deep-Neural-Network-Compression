@@ -7,8 +7,6 @@ import shutil
 
 import numpy as np
 
-import torch
-
 from utils.train import is_int, progress_bar, accuracy, AverageMeter
 
 class Recorder():
@@ -16,26 +14,21 @@ class Recorder():
     A class to record training log and write into txt file
     """
 
-    def __init__(self, SummaryPath, dataset_name='CIFAR10', task_name = None):
+    def __init__(self, SummaryPath, dataset_name='CIFAR10', task_name = None, start_epoch = 0, epoch_size = 391):
 
         self.SummaryPath = SummaryPath
 
         if not os.path.exists(SummaryPath):
             os.makedirs(SummaryPath)
         else:
-            if os.path.exists('%s/ckpt.pt' %SummaryPath):
-                action = input('r for resume training, d for delete the previous log')
-                if action == 'd':
-                    print('Record exist, remove')
-                    shutil.rmtree(SummaryPath)
-                    os.makedirs(SummaryPath)
+            if start_epoch != 0:
+                print('Resume training from epoch %d' %start_epoch)
             else:
                 print('Record exist, remove')
                 shutil.rmtree(SummaryPath)
                 os.makedirs(SummaryPath)
 
         print('Summary records saved at: %s' %SummaryPath)
-
 
         self.task_name = task_name
         if self.task_name is None:
@@ -50,7 +43,7 @@ class Recorder():
         ##########
         # For shared
         self.train_loss = 0
-        self.niter = 0  # Overall iteration record
+        self.niter = start_epoch * epoch_size  # Overall iteration record
         self.test_loss = 0
         self.smallest_training_loss = 1e9
         self.stop = False  # Whether to stop training
@@ -128,7 +121,7 @@ class Recorder():
                 self.loss_record.write('%d, %.8f\n' % (self.niter, self.train_loss / self.n_batch))
                 self.loss_record.write('%d, %.8f, %.8f\n'
                                        % (self.niter, self.loss.val, self.loss.avg))
-                self.train_acc_record.write('%d, %.3f, %.3f\n'
+                self.train_acc_record.write('%d, %.4f, %.4f\n'
                                             % (self.niter, self.top1.val, self.top1.avg))
                 self.lr_record.write('%d, %e\n' % (self.niter, cur_lr))
                 self.constraint_record.write('%d, %.8f, %.8f\n'
@@ -144,8 +137,8 @@ class Recorder():
                 self.loss_ImageNet.update(loss, batch_size)
 
                 self.loss_record.write('%d, %.8f\n' % (self.niter, self.loss_ImageNet.avg))
-                self.train_top1_acc_record.write('%d, %.3f\n' % (self.niter, self.top1.avg))
-                self.train_top5_acc_record.write('%d, %.3f\n' % (self.niter, self.top5.avg))
+                self.train_top1_acc_record.write('%d, %.4f\n' % (self.niter, self.top1.avg))
+                self.train_top5_acc_record.write('%d, %.4f\n' % (self.niter, self.top5.avg))
                 self.lr_record.write('%d, %e\n' % (self.niter, cur_lr))
 
                 self.flush([self.loss_record, self.train_top1_acc_record, self.train_top5_acc_record, self.lr_record])
@@ -164,13 +157,13 @@ class Recorder():
                     else:
                         self.best_test_flag = False
 
-                    self.test_acc_record.write('%d, %.3f\n' % (self.niter, self.test_acc))
+                    self.test_acc_record.write('%d, %.4f\n' % (self.niter, self.test_acc))
 
                 elif isinstance(acc, list):
                     self.test_acc = np.mean(acc)
                     self.test_acc_record.write('%d' %self.niter)
                     for each_acc in acc:
-                        self.test_acc_record.write(', %.3f' % each_acc)
+                        self.test_acc_record.write(', %.4f' % each_acc)
                     self.test_acc_record.write('\n')
 
                 self.flush([self.test_acc_record])

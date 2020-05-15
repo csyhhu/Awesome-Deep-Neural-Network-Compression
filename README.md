@@ -1,4 +1,4 @@
-![Maintenance](https://img.shields.io/maintenance/yes/2019.svg?color=red&style=flat-square)
+![Maintenance](https://img.shields.io/maintenance/yes/2020.svg?color=red&style=flat-square)
 ![GitHub last commit](https://img.shields.io/github/last-commit/csyhhu/Awesome-Deep-Neural-Network-Compression.svg?style=flat-square)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/csyhhu/Awesome-Deep-Neural-Network-Compression.svg?style=flat-square)
 [![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg?style=flat-square)](https://GitHub.com/Naereen/ama)
@@ -20,6 +20,7 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
     - [Network Architecture Search (NAS) for Model Compression](./Paper/NAS.md)
     - [Compression Meets Robustness (Adversarial)](./Paper/Robust-Compression.md)
     - [NLP Compression](./Paper/NLP-Compression.md)
+    - [Differentiable Compression](./Paper/Differentiable-Compression.md)
     
  +  [By Conference](./Paper/PaperByConference.md):
  

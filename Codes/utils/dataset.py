@@ -85,7 +85,7 @@ def get_dataloader(dataset_name, split, batch_size, \
                                          ]))
             loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=shuffle, num_workers=2)
 
-    elif dataset_name == 'CIFAR10':
+    elif dataset_name in ['CIFAR10', 'cifar10']:
 
         data_root_list = ['/home/shangyu/datasets/CIFAR10', '/data/datasets/CIFAR10',
                           '/home/sinno/datasets/CIFAR10', '/Users/shangyu/Documents/datasets/CIFAR10']

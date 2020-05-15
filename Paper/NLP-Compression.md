@@ -18,9 +18,11 @@
 - Are Sixteen Heads Really Better than One?
 - Structured Pruning of Large Language Models
 - Pruning a BERT-based Question Answering Model
+- DynaBERT: Dynamic BERT with Adaptive Width and Depth
 
 
 ### Distillation
+- [Another Summary](https://github.com/thunlp/PLMpapers#knowledge-distillation--model-compression)
 - TinyBERT: Distilling BERT for Natural Language Understanding
 - DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter
 

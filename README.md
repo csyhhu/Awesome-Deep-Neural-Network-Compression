@@ -28,7 +28,7 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
     - [2019](./Paper/Conference/2019.md)
     - [2018](./Paper/Conference/2018.md)
     
- +  Survey
+ +  [Survey](./Paper/survey.md)
  
  + Related Topic:
    - [Optimization](./)

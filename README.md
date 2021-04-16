@@ -23,7 +23,7 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
     - [Differentiable Compression](./Paper/Differentiable-Compression.md)
     
  +  [By Conference](./Paper/PaperByConference.md):
- 
+    - [2021](./Paper/Conference/2021.md)
 	- [2020](./Paper/Conference/2020.md)
     - [2019](./Paper/Conference/2019.md)
     - [2018](./Paper/Conference/2018.md)

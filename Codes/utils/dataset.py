@@ -87,8 +87,7 @@ def get_dataloader(dataset_name, split, batch_size, \
 
     elif dataset_name in ['CIFAR10', 'cifar10']:
 
-        data_root_list = ['/home/shangyu/datasets/CIFAR10', '/data/datasets/CIFAR10',
-                          '/home/sinno/datasets/CIFAR10', '/Users/shangyu/Documents/datasets/CIFAR10']
+        data_root_list = [os.path.join(os.path.expandvars('~'), 'datasets')]
 
         for data_root in data_root_list:
             if os.path.exists(data_root):
@@ -104,8 +103,7 @@ def get_dataloader(dataset_name, split, batch_size, \
                 transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
             ])
 
-            trainset = CIFAR10_utils.CIFAR10(root=data_root, train=True, download=True,
-                                                    transform=transform_train, ratio=ratio)
+            trainset = CIFAR10_utils.CIFAR10(root=data_root, train=True, download=True, transform=transform_train, ratio=ratio)
             print ('Number of training instances used: %d' %(len(trainset)))
             loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=shuffle, num_workers=2)
 

@@ -135,7 +135,6 @@ def is_int(s):
         return False
 
 
-
 def adjust_learning_rate(optimizer, epoch, init_lr=1e-3, decrease_epoch=5):
     """Sets the learning rate to the initial LR decayed by 10 every decrease_epoch epochs"""
     lr = init_lr * (0.1 ** (epoch // decrease_epoch))
@@ -144,72 +143,69 @@ def adjust_learning_rate(optimizer, epoch, init_lr=1e-3, decrease_epoch=5):
         param_group['lr'] = lr
 
 
-def test(net, test_loader, use_cuda = True, dataset_name='CIFAR10', n_batches_used=None):
-    """
-    A basic test function for forward without additional arguments
-    :param net:
-    :param test_loader:
-    :param use_cuda:
-    :param dataset_name:
-    :param n_batches_used:
-    :return:
-    """
+def train(_net, _train_loader, _optimizer, _criterion, _device = 'cpu', _recorder = None):
 
-    net.eval()
+    _net.train()
+    _train_loss = 0
+    _correct = 0
+    _total = 0
 
-    if dataset_name != 'ImageNet':
-        correct = 0
-        total = 0
-        for batch_idx, (inputs, targets) in enumerate(test_loader):
-            if use_cuda:
-                inputs, targets = inputs.cuda(), targets.cuda()
+    for batch_idx, (inputs, targets) in enumerate(_train_loader):
 
-            with torch.no_grad():
-                outputs = net(inputs)
+        inputs, targets = inputs.to(_device), targets.to(_device)
 
-            _, predicted = torch.max(outputs.data, dim=1)
-            correct += predicted.eq(targets.data).cpu().sum().item()
-            total += targets.size(0)
-            progress_bar(batch_idx, len(test_loader), "Test Acc: %.3f%%" % (100.0 * correct / total))
+        _optimizer.zero_grad()
+        outputs = _net(inputs)
+        losses = _criterion(outputs, targets)
+        losses.backward()
+        _optimizer.step()
 
-        return 100.0 * correct / total
+        _train_loss += losses.data.item()
+        _, predicted = torch.max(outputs.data, 1)
+        _total += targets.size(0)
+        _correct += predicted.eq(targets.data).cpu().sum().item()
 
-    else:
-        batch_time = AverageMeter()
-        train_loss = AverageMeter()
-        top1 = AverageMeter()
-        top5 = AverageMeter()
+        progress_bar(
+            batch_idx, len(_train_loader),
+            'Loss: %.3f | Acc: %.3f%% (%d/%d)' % (_train_loss / (batch_idx + 1), 100. * _correct / _total, _correct, _total)
+        )
+
+        if _recorder is not None:
+            _recorder.update(loss=losses.data.item(), acc=[_correct / _total], batch_size=inputs.size(0), is_train=True)
+
+
+    return _train_loss / (len(_train_loader)), _correct / _total
+
+
+def test(_net, _test_loader, _criterion, _device = 'cpu', _recorder = None):
+
+    _net.eval()
+
+    _test_loss = 0
+    _correct = 0
+    _total = 0
+
+    for batch_idx, (inputs, targets) in enumerate(_test_loader):
+
+        inputs, targets = inputs.to(_device), targets.to(_device)
 
         with torch.no_grad():
-            end = time.time()
-            for batch_idx, (inputs, targets) in enumerate(test_loader):
-                if use_cuda:
-                    inputs, targets = inputs.cuda(), targets.cuda()
-                outputs = net(inputs)
-                losses = nn.CrossEntropyLoss()(outputs, targets)
+            outputs = _net(inputs)
 
-                prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-                train_loss.update(losses.data.item(), inputs.size(0))
-                top1.update(prec1.item(), inputs.size(0))
-                top5.update(prec5.item(), inputs.size(0))
+        losses = _criterion(outputs, targets)
 
-                # measure elapsed time
-                batch_time.update(time.time() - end)
-                end = time.time()
+        _test_loss += losses.data.item()
+        _, predicted = torch.max(outputs.data, 1)
+        _total += targets.size(0)
+        _correct += predicted.eq(targets.data).cpu().sum().item()
 
-                if batch_idx % 200 == 0:
-                    print('Test: [{0}/{1}]\t'
-                          'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                          'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                          'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                          'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                        batch_idx, len(test_loader), batch_time=batch_time, loss=train_loss,
-                        top1=top1, top5=top5))
+        progress_bar(
+            batch_idx,
+            len(_test_loader),
+            'Loss: %.3f | Acc: %.3f%% (%d/%d)' % (_test_loss / (batch_idx + 1), 100. * float(_correct) / _total, _correct, _total)
+        )
 
-                if n_batches_used is not None and batch_idx >= n_batches_used:
-                    break
+    if _recorder is not None:
+        _recorder.update(loss=_test_loss, acc=[float(_correct) / _total], is_train=False)
 
-        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
-              .format(top1=top1, top5=top5))
-
-        return top1.avg, top5.avg
+    return _test_loss / (len(_test_loader)), float(_correct) / _total

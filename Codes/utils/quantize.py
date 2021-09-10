@@ -43,6 +43,24 @@ class Function_sign(torch.autograd.Function):
         return grad_inputs, None
 
 
+class Function_unbiased_quantize(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, _normalized_weight, _bit):
+        ctx.save_for_backward(_normalized_weight)
+        n = 2 ** (_bit - 1)
+        _round_x = torch.round(_normalized_weight * n)  # [-1, 1] => [-n, n]
+        # {-n, n, 1} => {-n, n-1, 1}
+        _quantized_bit = torch.clip(
+            _round_x, -n, n - 1
+        )
+        return _quantized_bit / n, _quantized_bit
+
+    @staticmethod
+    def backward(ctx, _grad_normalized_quantized_weight, _grad_quantized_bit):
+        return _grad_normalized_quantized_weight, None
+
+
 class quantized_CNN(nn.Conv2d):
 
     def __init__(self, in_channels, out_channels, kernel_size,

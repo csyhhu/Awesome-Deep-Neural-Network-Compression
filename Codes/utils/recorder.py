@@ -104,7 +104,7 @@ class Recorder():
 
         self.args_record.close()
 
-    def update(self, loss=0, acc=0, constraint=0, batch_size=0, cur_lr=1e-3, end=None, is_train = True):
+    def update(self, loss=0, acc: list=[0, 0], constraint=0, batch_size=0, cur_lr=1e-3, end=None, is_train=True):
 
         if is_train:
 
@@ -118,17 +118,13 @@ class Recorder():
                 self.top1.update(acc[0], batch_size)
                 self.constraint.update(constraint, batch_size)
                 # self.batch_time.update(time.time() - end)
-                self.loss_record.write('%d, %.8f\n' % (self.niter, self.train_loss / self.n_batch))
-                self.loss_record.write('%d, %.8f, %.8f\n'
-                                       % (self.niter, self.loss.val, self.loss.avg))
-                self.train_acc_record.write('%d, %.4f, %.4f\n'
-                                            % (self.niter, self.top1.val, self.top1.avg))
+                # self.loss_record.write('%d, %.8f\n' % (self.niter, self.train_loss / self.n_batch))
+                self.loss_record.write('%d, %.8f, %.8f\n'% (self.niter, self.loss.val, self.loss.avg))
+                self.train_acc_record.write('%d, %.4f, %.4f\n'% (self.niter, self.top1.val, self.top1.avg))
                 self.lr_record.write('%d, %e\n' % (self.niter, cur_lr))
-                self.constraint_record.write('%d, %.8f, %.8f\n'
-                                       % (self.niter, self.constraint.val, self.constraint.avg))
+                self.constraint_record.write('%d, %.8f, %.8f\n' % (self.niter, self.constraint.val, self.constraint.avg))
 
-                self.flush([self.loss_record, self.train_acc_record,
-                            self.lr_record, self.constraint_record])
+                self.flush([self.loss_record, self.train_acc_record, self.lr_record, self.constraint_record])
 
             else:
                 self.batch_time.update(time.time() - end)

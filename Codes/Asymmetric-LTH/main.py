@@ -42,19 +42,18 @@ model_name = args.model
 dataset_name = args.dataset
 
 if args.ckpt_path is None:
-    ckpt_root = './Results/%s-%s/asymmetric-MAQ-XNOR/checkpoint/' % (model_name, dataset_name)
+    ckpt_root = './Results/%s-%s/asymmetric-LTH/checkpoint/' % (model_name, dataset_name)
     if not os.path.exists(ckpt_root):
         os.makedirs(ckpt_root)
     ckpt_path = os.path.join(
         ckpt_root, '%s-bitW-%d-bitA-%d-lr-adjust-%d-epoch-%d%s.ckpt' % (
-            args.optimizer, args.bitW, args.bitA, args.lr_adjust,
-            args.max_epoch, '-%s' % args.exp_spec if args.exp_spec is not None else ''
+            args.optimizer, args.bitW, args.bitA, args.lr_adjust, args.max_epoch, '-%s' % args.exp_spec if args.exp_spec is not None else ''
         )
     )
 else:
     ckpt_path = args.ckpt_path
 
-save_root = './Results/%s-%s/asymmetric-MAQ-XNOR/%s-bitW-%d-bitA-%d-lr-adjust-%d-epoch-%d%s%s' %(
+save_root = './Results/%s-%s/asymmetric-LTH/%s-bitW-%d-bitA-%d-lr-adjust-%d-epoch-%d%s%s' %(
     model_name, dataset_name, args.optimizer, args.bitW, args.bitA, args.lr_adjust, args.max_epoch,
     "-pretrain" if args.pretrain else "", '-%s' % args.exp_spec if args.exp_spec is not None else ''
 )
@@ -118,6 +117,10 @@ weight_threshold_recorder_collections = {}
 input_threshold_recorder_collections = {}
 weight_quantization_error_recorder_collection = {}
 input_quantization_error_recorder_collection = {}
+min_max_weight_recorder_collection = {}
+min_max_input_recorder_collection = {}
+weight_bit_allocation_collection = {}
+input_bit_allocation_collection = {}
 for name, layer in net.quantized_layer_collections.items():
     if not os.path.exists('%s/%s' % (save_root, name)):
         os.makedirs('%s/%s' % (save_root, name))
@@ -125,6 +128,10 @@ for name, layer in net.quantized_layer_collections.items():
     input_threshold_recorder_collections[name] = open('%s/%s/input_threshold.txt' % (save_root, name), 'a+')
     weight_quantization_error_recorder_collection[name] = open('%s/%s/weight_quantization_error.txt' % (save_root, name), 'a+')
     input_quantization_error_recorder_collection[name] = open('%s/%s/input_quantization_error.txt' % (save_root, name), 'a+')
+    min_max_weight_recorder_collection[name] = open('%s/%s/min_max_weight.txt' % (save_root, name), 'a+')
+    min_max_input_recorder_collection[name] = open('%s/%s/min_max_input.txt' % (save_root, name), 'a+')
+    weight_bit_allocation_collection[name] = open('%s/%s/weight_bit_allocation.txt' % (save_root, name), 'a+')
+    input_bit_allocation_collection[name] = open('%s/%s/input_bit_allocation.txt' % (save_root, name), 'a+')
 
 for epoch in range(start_epoch, start_epoch + max_training_epoch):
 
@@ -134,7 +141,11 @@ for epoch in range(start_epoch, start_epoch + max_training_epoch):
         _weight_threshold_recorder_collection=weight_threshold_recorder_collections,
         _input_threshold_recorder_collection=input_threshold_recorder_collections,
         _weight_quantization_error_collection=weight_quantization_error_recorder_collection,
-        _input_quantization_error_collection=input_quantization_error_recorder_collection
+        _input_quantization_error_collection=input_quantization_error_recorder_collection,
+        _min_max_weight_collection=min_max_weight_recorder_collection,
+        _min_max_input_collection=min_max_input_recorder_collection,
+        _weight_bit_allocation_collection=weight_bit_allocation_collection,
+        _input_bit_allocation_collection=input_bit_allocation_collection
     )
     test_loss, test_acc = test(
         net, test_loader, criterion, _device=device, _recorder=recorder
@@ -170,7 +181,9 @@ for epoch in range(start_epoch, start_epoch + max_training_epoch):
 recorder.close()
 for collection in [
     weight_threshold_recorder_collections, input_threshold_recorder_collections,
-    weight_quantization_error_recorder_collection, input_quantization_error_recorder_collection
+    weight_quantization_error_recorder_collection, input_quantization_error_recorder_collection,
+    min_max_weight_recorder_collection, min_max_input_recorder_collection,
+    weight_bit_allocation_collection, input_bit_allocation_collection
 ]:
     for recorder in collection.values():
         recorder.close()

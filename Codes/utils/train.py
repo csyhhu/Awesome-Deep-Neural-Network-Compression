@@ -17,6 +17,7 @@ last_time = time.time()
 begin_time = last_time
 
 def progress_bar(current, total, msg=None):
+
     global last_time, begin_time
     if current == 0:
         begin_time = time.time()  # Reset for new bar.
@@ -38,8 +39,8 @@ def progress_bar(current, total, msg=None):
     tot_time = cur_time - begin_time
 
     L = []
-    # L.append('  Step: %s' % format_time(step_time))
-    # L.append(' | Tot: %s' % format_time(tot_time))
+    L.append('  Step: %s' % format_time(step_time))
+    L.append(' | Tot: %s' % format_time(tot_time))
     if msg:
         L.append(' | ' + msg)
 
@@ -61,6 +62,7 @@ def progress_bar(current, total, msg=None):
 
 
 def format_time(seconds):
+
     days = int(seconds / 3600/24)
     seconds = seconds - days*3600*24
     hours = int(seconds / 3600)

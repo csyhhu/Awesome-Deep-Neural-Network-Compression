@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.quantize import Function_unbiased_quantize
+from utils.quantize import Function_unbiased_quantize, Function_unbiased_quantize_STE
 
 class MAQ_XNOR_Conv2d(nn.Conv2d):
 
@@ -26,11 +26,15 @@ class MAQ_XNOR_Conv2d(nn.Conv2d):
         self.quantized_weight_bit = None
         self.quantized_weight = None
         self.quantized_input_bit = None
-        self.quantize_input = None
+        self.quantized_input = None
+
+        self.fp_input = None
 
         print('Initialize asymmetric-MAQ-XNOR using bitW=%d, bitA=%d, alpha=%.2f' % (self.bitW, self.bitA, self.alpha))
 
     def forward(self, x):
+
+        self.fp_input = x
 
         if self.training:
             self.weight_threshold = torch.max(torch.abs(self.weight.data))
@@ -43,27 +47,36 @@ class MAQ_XNOR_Conv2d(nn.Conv2d):
             # Quantize weight
             # [-\alpha, \alpha]
             _clip_weight = torch.clip(self.weight, min=-self.weight_threshold, max=self.weight_threshold)
+            _clip_mask = torch.le(torch.abs(self.weight.data), self.weight_threshold.data).to(self.weight.device)
             # [-1, 1]
             _normalized_weight = _clip_weight / self.weight_threshold.data
-            _normalized_quantized_weight, self.quantized_weight_bit = Function_unbiased_quantize.apply(_normalized_weight, self.bitW)
+            _normalized_quantized_weight, self.quantized_weight_bit = Function_unbiased_quantize_STE.apply(
+                _normalized_weight, self.bitW, _clip_mask
+            )
             self.quantized_weight = _normalized_quantized_weight * self.weight_threshold.data
 
         if self.bitA == 32:
-            self.quantize_input = x * 1.
+            self.quantized_input = x * 1.
         else:
             # Quantize input
             _clip_x = torch.clip(x, min=self.left_input_threshold, max=self.right_input_threshold)
+            _clip_mask = torch.logical_and(
+                torch.le(x.data, self.right_input_threshold.data),
+                torch.ge(x.data, self.left_input_threshold.data)
+            ).to(x.device)
             #
             _mid_point = ((self.left_input_threshold + self.right_input_threshold) / 2.).data
             _symmetric_threshold = (self.right_input_threshold - _mid_point).data
             _shift_scale_x = (_clip_x - _mid_point) / _symmetric_threshold
             # [-1, 1] => [-2^{b-1}, 2^{b-1}] => [-1, 1]
-            _normalized_quantized_input, self.quantized_input_bit = Function_unbiased_quantize.apply(_shift_scale_x, self.bitA)
+            _normalized_quantized_input, self.quantized_input_bit = Function_unbiased_quantize_STE.apply(
+                _shift_scale_x, self.bitA, _clip_mask
+            )
             # [-1, 1] => [a, b]
-            self.quantize_input = _normalized_quantized_input * _symmetric_threshold + _mid_point
+            self.quantized_input = _normalized_quantized_input * _symmetric_threshold + _mid_point
 
         return F.conv2d(
-            self.quantize_input, self.quantized_weight, self.bias, self.stride, self.padding, self.dilation, self.groups
+            self.quantized_input, self.quantized_weight, self.bias, self.stride, self.padding, self.dilation, self.groups
         )
 
 
@@ -101,4 +114,4 @@ if __name__ == '__main__':
             )
         )
         print('Quantized weight: %s' % (np.unique(conv.quantized_weight.data.numpy())))
-        print('Quantized input: %s' % (np.unique(conv.quantize_input.data.numpy())))
+        print('Quantized input: %s' % (np.unique(conv.quantized_input.data.numpy())))

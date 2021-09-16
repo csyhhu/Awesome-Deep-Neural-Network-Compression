@@ -3,6 +3,7 @@ A class to incorprate all necessary function to record training log
 """
 import time
 import os
+import sys
 import shutil
 
 import numpy as np
@@ -14,19 +15,21 @@ class Recorder():
     A class to record training log and write into txt file
     """
 
-    def __init__(self, SummaryPath, dataset_name='CIFAR10', task_name = None, start_epoch = 0, epoch_size = 391):
+    def __init__(self, SummaryPath, dataset_name='CIFAR10', task_name = None):
 
         self.SummaryPath = SummaryPath
 
         if not os.path.exists(SummaryPath):
             os.makedirs(SummaryPath)
         else:
-            if start_epoch != 0:
-                print('Resume training from epoch %d' %start_epoch)
-            else:
-                print('Record exist, remove')
+            flag = input('Recorder [%s] exist, remove ? y for remove' % SummaryPath)
+            if flag == 'y':
+                print('Record remove')
                 shutil.rmtree(SummaryPath)
                 os.makedirs(SummaryPath)
+            else:
+                print('Program exit.')
+                sys.exit(0)
 
         print('Summary records saved at: %s' %SummaryPath)
 
@@ -43,7 +46,8 @@ class Recorder():
         ##########
         # For shared
         self.train_loss = 0
-        self.niter = start_epoch * epoch_size  # Overall iteration record
+        # self.niter = start_epoch * epoch_size  # Overall iteration record
+        self.niter = 0
         self.test_loss = 0
         self.smallest_training_loss = 1e9
         self.stop = False  # Whether to stop training

@@ -10,12 +10,12 @@ import torch
 import torch.nn as nn
 import math
 
-from module import MAQ_XNOR_Conv2d
+from module import LearnableThresHold_Conv2d
 
 
 def conv3x3(in_planes, out_planes, stride=1, bitW=8, bitA=8):
     " 3x3 convolution with padding "
-    return MAQ_XNOR_Conv2d(in_planes, out_planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA)
+    return LearnableThresHold_Conv2d(in_planes, out_planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA)
 
 
 class BasicBlock(nn.Module):
@@ -58,11 +58,11 @@ class Bottleneck(nn.Module):
 
     def __init__(self, inplanes, planes, stride=1, downsample=None, bitW=8, bitA=8):
         super(Bottleneck, self).__init__()
-        self.conv1 = MAQ_XNOR_Conv2d(inplanes, planes, kernel_size=(1, 1), bias=False, bitW=bitW, bitA=bitA)
+        self.conv1 = LearnableThresHold_Conv2d(inplanes, planes, kernel_size=(1, 1), bias=False, bitW=bitW, bitA=bitA)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = MAQ_XNOR_Conv2d(planes, planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA)
+        self.conv2 = LearnableThresHold_Conv2d(planes, planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = MAQ_XNOR_Conv2d(planes, planes*4, kernel_size=(1, 1), bias=False, bitW=bitW, bitA=bitA)
+        self.conv3 = LearnableThresHold_Conv2d(planes, planes * 4, kernel_size=(1, 1), bias=False, bitW=bitW, bitA=bitA)
         self.bn3 = nn.BatchNorm2d(planes*4)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -99,7 +99,7 @@ class ResNet_Cifar(nn.Module):
         self.inplanes = 16
         self.bitW = bitW
         self.bitA = bitA
-        self.conv1 = MAQ_XNOR_Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False, bitW=bitW, bitA=bitA)
+        self.conv1 = LearnableThresHold_Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False, bitW=bitW, bitA=bitA)
         self.quantized_layer_collections = {'conv1': self.conv1}
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=True)
@@ -121,7 +121,7 @@ class ResNet_Cifar(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                MAQ_XNOR_Conv2d(
+                LearnableThresHold_Conv2d(
                     self.inplanes, planes * block.expansion, kernel_size=(1, 1), stride=(stride, stride), bias=False,
                     bitW=self.bitW, bitA=self.bitA
                 ),

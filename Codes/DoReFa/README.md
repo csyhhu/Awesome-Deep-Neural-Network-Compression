@@ -2,6 +2,8 @@
 
 Note: Currently only weights quantization is finished.
 
+Updated [Sept.16th, 2021]: Weights/Activation quantization is supported.
+
 ## How to use it
 
 ### Specify your Dataset Root
@@ -11,6 +13,8 @@ Please refer to [here](./README.md)
 Please refer to [here](../TTQ/README.md)
 
 ### Run the code
+
+#### Weight Quantization Only (Old Version)
 For k-bit quantization using `dorefa`
 ```
 python DoReFa.py -m ResNet20 -d CIFAR10 -q dorefa -bw k
@@ -18,6 +22,12 @@ python DoReFa.py -m ResNet20 -d CIFAR10 -q dorefa -bw k
 For 1-bit quantization using `BWN`
 ```
 python DoReFa.py -m ResNet20 -d CIFAR10 -q BWN
+```
+
+#### Weight/Activation Quantization
+For k-bit quantization using `dorefa`
+```
+python main.py -m ResNet20 -d CIFAR10 -bw k -ba k -o SGD
 ```
 
 ## Experiments

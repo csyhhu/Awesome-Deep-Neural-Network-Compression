@@ -10,7 +10,7 @@ class MAQ_XNOR_Conv2d(nn.Conv2d):
         self, in_channels, out_channels, kernel_size,
         stride=1, padding=0, dilation=1, groups=1, bias=True,
         bitW=8, bitA=8,
-        alpha=0.9
+        alpha=0.9, compression=.1
     ):
         super(MAQ_XNOR_Conv2d, self).__init__(
             in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias
@@ -19,6 +19,7 @@ class MAQ_XNOR_Conv2d(nn.Conv2d):
         self.bitW = bitW
         self.bitA = bitA
         self.alpha = alpha
+        self.compression = compression
         self.register_buffer("weight_threshold", torch.zeros([]))
         self.register_buffer("left_input_threshold", torch.tensor([-1.]))
         self.register_buffer("right_input_threshold", torch.tensor([1.]))
@@ -37,9 +38,9 @@ class MAQ_XNOR_Conv2d(nn.Conv2d):
         self.fp_input = x
 
         if self.training:
-            self.weight_threshold = torch.max(torch.abs(self.weight.data))
-            self.left_input_threshold = self.alpha * torch.min(x) + (1 - self.alpha) * self.left_input_threshold.data
-            self.right_input_threshold = self.alpha * torch.max(x) + (1 - self.alpha) * self.right_input_threshold.data
+            self.weight_threshold = torch.max(torch.abs(self.weight.data)) * self.compression
+            self.left_input_threshold = self.alpha * self.compression * torch.min(x) + (1 - self.alpha) * self.left_input_threshold.data
+            self.right_input_threshold = self.alpha * self.compression * torch.max(x) + (1 - self.alpha) * self.right_input_threshold.data
 
         if self.bitW == 32:
             self.quantized_weight = self.weight * 1.

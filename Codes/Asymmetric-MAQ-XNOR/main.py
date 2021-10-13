@@ -118,6 +118,8 @@ weight_threshold_recorder_collections = {}
 input_threshold_recorder_collections = {}
 weight_quantization_error_recorder_collection = {}
 input_quantization_error_recorder_collection = {}
+weight_bit_allocation_collection = {}
+input_bit_allocation_collection = {}
 for name, layer in net.quantized_layer_collections.items():
     if not os.path.exists('%s/%s' % (save_root, name)):
         os.makedirs('%s/%s' % (save_root, name))
@@ -125,6 +127,8 @@ for name, layer in net.quantized_layer_collections.items():
     input_threshold_recorder_collections[name] = open('%s/%s/input_threshold.txt' % (save_root, name), 'a+')
     weight_quantization_error_recorder_collection[name] = open('%s/%s/weight_quantization_error.txt' % (save_root, name), 'a+')
     input_quantization_error_recorder_collection[name] = open('%s/%s/input_quantization_error.txt' % (save_root, name), 'a+')
+    weight_bit_allocation_collection[name] = open('%s/%s/weight_bit_allocation.txt' % (save_root, name), 'a+')
+    input_bit_allocation_collection[name] = open('%s/%s/input_bit_allocation.txt' % (save_root, name), 'a+')
 
 for epoch in range(start_epoch, start_epoch + max_training_epoch):
 
@@ -134,7 +138,9 @@ for epoch in range(start_epoch, start_epoch + max_training_epoch):
         _weight_threshold_recorder_collection=weight_threshold_recorder_collections,
         _input_threshold_recorder_collection=input_threshold_recorder_collections,
         _weight_quantization_error_collection=weight_quantization_error_recorder_collection,
-        _input_quantization_error_collection=input_quantization_error_recorder_collection
+        _input_quantization_error_collection=input_quantization_error_recorder_collection,
+        _weight_bit_allocation_collection=weight_bit_allocation_collection,
+        _input_bit_allocation_collection=input_bit_allocation_collection
     )
     test_loss, test_acc = test(
         net, test_loader, criterion, _device=device, _recorder=recorder

@@ -16,7 +16,8 @@ def train(
         _net, _train_loader, _optimizer, _criterion, _device = 'cpu',
         _recorder: Recorder = None,
         _weight_threshold_recorder_collection = None, _input_threshold_recorder_collection = None,
-        _weight_quantization_error_collection = None, _input_quantization_error_collection = None
+        _weight_quantization_error_collection = None, _input_quantization_error_collection = None,
+        _weight_bit_allocation_collection = None, _input_bit_allocation_collection = None
 ):
 
     _net.train()
@@ -58,7 +59,14 @@ def train(
                 _input_quantization_error = torch.abs(layer.quantized_input - layer.fp_input).mean().item()
                 _weight_quantization_error_collection[name].write('%.8e\n' % _weight_quantization_error)
                 _input_quantization_error_collection[name].write('%.8e\n' % _input_quantization_error)
-        # if batch_idx > 4:
-        #     break
+
+        if _weight_bit_allocation_collection and _input_bit_allocation_collection is not None:
+            for name, layer in _net.quantized_layer_collections.items():
+                _weight_bit_allocation_collection[name].write(
+                    '%.2f\n' % (torch.abs(layer.quantized_weight_bit).mean().item())
+                )
+                _input_bit_allocation_collection[name].write(
+                    '%.2f\n' % (torch.abs(layer.quantized_input_bit).mean().item())
+                )
 
     return _train_loss / (len(_train_loader)), _correct / _total

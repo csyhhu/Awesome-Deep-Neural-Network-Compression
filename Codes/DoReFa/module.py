@@ -9,7 +9,7 @@ class dorefa_Conv2d(nn.Conv2d):
     def __init__(
         self, in_channels, out_channels, kernel_size,
         stride=1, padding=0, dilation=1, groups=1, bias=True,
-        bitW=8, bitA=8
+        bitW=8, bitA=8, use_log_scale=False
     ):
         super(dorefa_Conv2d, self).__init__(
             in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias
@@ -25,6 +25,7 @@ class dorefa_Conv2d(nn.Conv2d):
         self.quantized_input = None
         self.quantized_input_bit = None
 
+        self.use_log_scale = use_log_scale
 
     def forward(self, x):
 

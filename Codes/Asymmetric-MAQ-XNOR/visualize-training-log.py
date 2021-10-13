@@ -14,58 +14,64 @@ layer_name = args.selected_layer
 
 method_list = {
 
-    "asymmetric-MAQ-XNOR-32-32":{
-        'name': '32-32',
-        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/bitW-32-bitA-32-lr-adjust-10-epoch-30',
-        'color': 'k'
-    },
+    # "asymmetric-MAQ-XNOR-32-32":{
+    #     'name': '32-32',
+    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/bitW-32-bitA-32-lr-adjust-10-epoch-30',
+    #     'color': 'k'
+    # },
 
-    "asymmetric-MAQ-XNOR":{
-        'name': 'asymmetric-MAQ-XNOR-SGD',
-        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/bitW-4-bitA-4-lr-adjust-10-epoch-30',
+    "asymmetric-MAQ-XNOR-1e-0":{
+        'name': 'asymmetric-MAQ-XNOR-1e-0',
+        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-1e-0',
         'color': 'r'
     },
 
-    "dorefa":{
-        'name': 'dorefa',
-        'path': 'Results/ResNet20-CIFAR10/dorefa/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30',
+    # "dorefa":{
+    #     'name': 'dorefa',
+    #     'path': 'Results/ResNet20-CIFAR10/dorefa/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30',
+    #     'color': 'y'
+    # },
+
+    "asymmetric-MAQ-XNOR-1e-1":{
+        'name': 'asymmetric-MAQ-XNOR-1e-1',
+        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-1e-1',
         'color': 'y'
     },
 
-    # "asymmetric-MAQ-XNOR-Pretrain":{
-    #     'name': 'asymmetric-MAQ-XNOR-SGD-Pretrain',
-    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-pretrain',
-    #     'color': 'g'
-    # },
+    "asymmetric-MAQ-XNOR-compression-7e-1":{
+        'name': 'asymmetric-MAQ-XNOR-compression-7e-1',
+        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-7e-1',
+        'color': 'g'
+    },
 
-    # "asymmetric-MAQ-XNOR-Adam":{
-    #     'name': 'asymmetric-MAQ-XNOR-Adam',
-    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/Adam-bitW-4-bitA-4-lr-adjust-10-epoch-30-init-lr-1e-2',
-    #     'color': 'b'
-    # },
-    #
     # "asymmetric-LTH-Adam":{
     #     'name': 'asymmetric-LTH-Adam',
     #     'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/Adam-bitW-4-bitA-4-lr-adjust-10-epoch-30-init-lr-1e-2',
     #     'color': 'g'
     # },
 
-    # "asymmetric-MAQ-XNOR-Adam-Pretrain":{
-    #     'name': 'asymmetric-MAQ-XNOR-Adam-Pretrain',
-    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/Adam-bitW-4-bitA-4-lr-adjust-10-epoch-30-pretrain',
-    #     'color': 'y'
-    # },
-
-    "asymmetric-LTH":{
-        'name': 'asymmetric-LTH',
-        'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/bitW-4-bitA-4-lr-adjust-10-epoch-30',
+    "asymmetric-MAQ-XNOR-compression-5e-1":{
+        'name': 'asymmetric-MAQ-XNOR-compression-5e-1',
+        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-5e-1',
         'color': 'b'
     },
+
+    # "asymmetric-LTH":{
+    #     'name': 'asymmetric-LTH',
+    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/bitW-4-bitA-4-lr-adjust-10-epoch-30',
+    #     'color': 'b'
+    # },
 
     # "asymmetric-LTH-domain-factor-5e-1":{
     #     'name': 'asymmetric-LTH-domain-factor-5e-1',
     #     'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-5e-1',
     #     'color': 'g'
+    # },
+
+    # "asymmetric-LTH-domain-factor-0":{
+    #     'name': 'asymmetric-LTH-domain-factor-0',
+    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-0',
+    #     'color': 'k'
     # }
 
     # ---

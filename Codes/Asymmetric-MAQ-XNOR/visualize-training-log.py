@@ -20,11 +20,11 @@ method_list = {
     #     'color': 'k'
     # },
 
-    "asymmetric-MAQ-XNOR-1e-0":{
-        'name': 'asymmetric-MAQ-XNOR-1e-0',
-        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-1e-0',
-        'color': 'r'
-    },
+    # "asymmetric-MAQ-XNOR-1e-0":{
+    #     'name': 'asymmetric-MAQ-XNOR-1e-0',
+    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-1e-0',
+    #     'color': 'r'
+    # },
 
     # "dorefa":{
     #     'name': 'dorefa',
@@ -32,17 +32,17 @@ method_list = {
     #     'color': 'y'
     # },
 
-    "asymmetric-MAQ-XNOR-1e-1":{
-        'name': 'asymmetric-MAQ-XNOR-1e-1',
-        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-1e-1',
-        'color': 'y'
-    },
-
-    "asymmetric-MAQ-XNOR-compression-7e-1":{
-        'name': 'asymmetric-MAQ-XNOR-compression-7e-1',
-        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-7e-1',
-        'color': 'g'
-    },
+    # "asymmetric-MAQ-XNOR-1e-1":{
+    #     'name': 'asymmetric-MAQ-XNOR-1e-1',
+    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-1e-1',
+    #     'color': 'y'
+    # },
+    #
+    # "asymmetric-MAQ-XNOR-compression-7e-1":{
+    #     'name': 'asymmetric-MAQ-XNOR-compression-7e-1',
+    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-7e-1',
+    #     'color': 'g'
+    # },
 
     # "asymmetric-LTH-Adam":{
     #     'name': 'asymmetric-LTH-Adam',
@@ -50,29 +50,29 @@ method_list = {
     #     'color': 'g'
     # },
 
-    "asymmetric-MAQ-XNOR-compression-5e-1":{
-        'name': 'asymmetric-MAQ-XNOR-compression-5e-1',
-        'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-5e-1',
-        'color': 'b'
-    },
-
-    # "asymmetric-LTH":{
-    #     'name': 'asymmetric-LTH',
-    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/bitW-4-bitA-4-lr-adjust-10-epoch-30',
+    # "asymmetric-MAQ-XNOR-compression-5e-1":{
+    #     'name': 'asymmetric-MAQ-XNOR-compression-5e-1',
+    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-MAQ-XNOR/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-compression-5e-1',
     #     'color': 'b'
     # },
 
-    # "asymmetric-LTH-domain-factor-5e-1":{
-    #     'name': 'asymmetric-LTH-domain-factor-5e-1',
-    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-5e-1',
-    #     'color': 'g'
-    # },
+    "asymmetric-LTH":{
+        'name': 'asymmetric-LTH',
+        'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/bitW-4-bitA-4-lr-adjust-10-epoch-30',
+        'color': 'b'
+    },
 
-    # "asymmetric-LTH-domain-factor-0":{
-    #     'name': 'asymmetric-LTH-domain-factor-0',
-    #     'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-0',
-    #     'color': 'k'
-    # }
+    "asymmetric-LTH-domain-factor-2e-1":{
+        'name': 'asymmetric-LTH-domain-factor-5e-1',
+        'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-2e-1',
+        'color': 'g'
+    },
+
+    "asymmetric-LTH-domain-factor-0":{
+        'name': 'asymmetric-LTH-domain-factor-0',
+        'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-0',
+        'color': 'k'
+    }
 
     # ---
     # Pretrained on Well-Train Model

@@ -75,7 +75,7 @@ class LearnableThresHold_Conv2d(nn.Conv2d):
         self, in_channels, out_channels, kernel_size,
         stride=1, padding=0, dilation=1, groups=1, bias=True,
         bitW=8, bitA=8,
-        in_domain_grad_factor=1., out_domain_grad_factor=0.2
+        in_domain_grad_factor=1., out_domain_grad_factor=0.7
     ):
         super(LearnableThresHold_Conv2d, self).__init__(
             in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias

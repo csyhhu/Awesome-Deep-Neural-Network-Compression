@@ -1,5 +1,7 @@
 # Re-implemented Codes for Network Compression
 
+**This is a developing branch.**
+
 A repo for **my** re-implementation of state-of-the-art methods. Mostly written in `PyTorch`.
 
 This re-implementation is based on the published paper and released codes (if available). Details and tricks may be 

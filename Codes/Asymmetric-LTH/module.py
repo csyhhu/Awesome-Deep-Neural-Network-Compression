@@ -58,14 +58,8 @@ class asymmetric_LTH_threshold_attachment(torch.autograd.Function):
 
         # print(in_domain_error.device, _grad_scaling_factor.device)
 
-        grad_loss_wrt_left_threshold = (
-                                           -_in_domain_grad_factor * in_domain_error +
-                                           _out_domain_grad_factor * out_of_min_error
-                                       ) * _grad_scaling_factor
-        grad_loss_wrt_right_threshold = (
-                                            _in_domain_grad_factor * in_domain_error -
-                                            _out_domain_grad_factor * out_of_max_error
-                                        ) * _grad_scaling_factor
+        grad_loss_wrt_left_threshold = (-_in_domain_grad_factor * in_domain_error + _out_domain_grad_factor * out_of_min_error) * _grad_scaling_factor
+        grad_loss_wrt_right_threshold = (_in_domain_grad_factor * in_domain_error - _out_domain_grad_factor * out_of_max_error) * _grad_scaling_factor
 
         return grad_loss_wrt_left_threshold, grad_loss_wrt_right_threshold, None, None, None, None, None, None
 

@@ -63,14 +63,14 @@ method_list = {
     },
 
     "asymmetric-LTH-domain-factor-2e-1":{
-        'name': 'asymmetric-LTH-domain-factor-5e-1',
+        'name': 'asymmetric-LTH-domain-factor-2e-1',
         'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-2e-1',
         'color': 'g'
     },
 
-    "asymmetric-LTH-domain-factor-0":{
-        'name': 'asymmetric-LTH-domain-factor-0',
-        'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-0',
+    "asymmetric-LTH-domain-factor-5e-1":{
+        'name': 'asymmetric-LTH-domain-factor-5e-1',
+        'path': 'Results/ResNet20-CIFAR10/asymmetric-LTH/SGD-bitW-4-bitA-4-lr-adjust-10-epoch-30-out-domain-grad-factor-5e-1',
         'color': 'k'
     }
 

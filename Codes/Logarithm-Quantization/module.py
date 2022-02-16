@@ -21,6 +21,9 @@ class Logarithm_Conv2d(nn.Conv2d):
 
         self.bitW = bitW
         self.bitA = bitA
+        self.alpha = alpha
+        self.compression = compression
+
         self.register_buffer("weight_threshold", torch.zeros([]))
         self.register_buffer("left_input_threshold", torch.tensor([-1.]))
         self.register_buffer("right_input_threshold", torch.tensor([1.]))

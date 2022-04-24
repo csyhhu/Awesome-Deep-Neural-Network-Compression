@@ -25,10 +25,12 @@ parser.add_argument('--lr', '-lr', default=0.1, type=float, help='learning rate'
 parser.add_argument('--model', '-m', type=str, default='ResNet20', help='Model arch')
 parser.add_argument('--dataset', '-d', type=str, default='CIFAR10', help='Dataset')
 parser.add_argument('--optimizer', '-o', type=str, default='SGD', help='Optimizer')
+parser.add_argument('--batch_size', '-bs', default=128, type=int, help='Batch size')
 parser.add_argument('--max_epoch', '-epoch', default=30, type=int, help='Number of maximum epoch')
 parser.add_argument('--lr_adjust', '-ad', default=10, type=int, help='Training strategy')
 parser.add_argument('--bitW', '-bw', default=4, type=int, help='Quantization bit for weight')
 parser.add_argument('--bitA', '-ba', default=4, type=int, help='Quantization bit for input')
+parser.add_argument('--bitG', '-bg', default=8, type=int, help='Quantization bit for gradient')
 parser.add_argument('--retrain', '-r', action='store_true', help='Whether to retrain from a pre-trained model')
 parser.add_argument('--ckpt_path', '-ckpt', default=None, help='Path to pre-trained model')
 parser.add_argument('--pretrain', '-pretrain',  action='store_true', help='Whether to use a pre-trained model')
@@ -46,23 +48,23 @@ if args.ckpt_path is None:
     if not os.path.exists(ckpt_root):
         os.makedirs(ckpt_root)
     ckpt_path = os.path.join(
-        ckpt_root, '%s-bitW-%d-bitA-%d-lr-adjust-%d-epoch-%d%s.ckpt' % (
-            args.optimizer, args.bitW, args.bitA, args.lr_adjust,
+        ckpt_root, '%s-bitW-%d-bitA-%d-bitG-%d-lr-adjust-%d-epoch-%d%s.ckpt' % (
+            args.optimizer, args.bitW, args.bitA, args.bitG, args.lr_adjust,
             args.max_epoch, '-%s' % args.exp_spec if args.exp_spec is not None else ''
         )
     )
 else:
     ckpt_path = args.ckpt_path
 
-save_root = './Results/%s-%s/dorefa/%s-bitW-%d-bitA-%d-lr-adjust-%d-epoch-%d%s%s' %(
-    model_name, dataset_name, args.optimizer, args.bitW, args.bitA, args.lr_adjust, args.max_epoch,
+save_root = './Results/%s-%s/dorefa/%s-bitW-%d-bitA-%d-bitG-%d-lr-adjust-%d-epoch-%d%s%s' %(
+    model_name, dataset_name, args.optimizer, args.bitW, args.bitA, args.bitG, args.lr_adjust, args.max_epoch,
     "-pretrain" if args.pretrain else "", '-%s' % args.exp_spec if args.exp_spec is not None else ''
 )
 
 # Data
 print('==> Preparing data..')
 
-train_loader = get_dataloader(dataset_name, 'train', 128)
+train_loader = get_dataloader(dataset_name, 'train', args.batch_size)
 test_loader = get_dataloader(dataset_name, 'test', 100)
 
 if dataset_name in ['CIFAR10', 'STL10']:
@@ -75,11 +77,11 @@ else:
 # Model
 print('==> Building model..')
 if model_name == 'ResNet20':
-    net = resnet20_cifar(num_classes=num_classes, bitW=args.bitW, bitA=args.bitA)
+    net = resnet20_cifar(num_classes=num_classes, bitW=args.bitW, bitA=args.bitA, bitG=args.bitG)
 elif model_name == 'ResNet32':
-    net = resnet20_cifar(num_classes=num_classes, bitW=args.bitW, bitA=args.bitA)
+    net = resnet20_cifar(num_classes=num_classes, bitW=args.bitW, bitA=args.bitA, bitG=args.bitG)
 elif model_name == 'ResNet56':
-    net = resnet20_cifar(num_classes=num_classes, bitW=args.bitW, bitA=args.bitA)
+    net = resnet20_cifar(num_classes=num_classes, bitW=args.bitW, bitA=args.bitA, bitG=args.bitG)
 else:
     raise NotImplementedError
 
@@ -116,8 +118,10 @@ recorder.write_arguments([args])
 # Initialize recorder for threshold
 weight_quantization_error_recorder_collection = {}
 input_quantization_error_recorder_collection = {}
+gradient_quantization_error_collection = {}
 weight_bit_allocation_collection = {}
 input_bit_allocation_collection = {}
+gradient_bit_allocation_collection = {}
 for name, layer in net.quantized_layer_collections.items():
     if not os.path.exists('%s/%s' % (save_root, name)):
         os.makedirs('%s/%s' % (save_root, name))

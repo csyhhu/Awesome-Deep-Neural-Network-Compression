@@ -13,20 +13,20 @@ import math
 from module import dorefa_Conv2d
 
 
-def conv3x3(in_planes, out_planes, stride=1, bitW=8, bitA=8):
+def conv3x3(in_planes, out_planes, stride=1, bitW=8, bitA=8, bitG=8):
     " 3x3 convolution with padding "
-    return dorefa_Conv2d(in_planes, out_planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA)
+    return dorefa_Conv2d(in_planes, out_planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA, bitG=bitG)
 
 
 class BasicBlock(nn.Module):
     expansion=1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, layer_idx=0, block_idx=0, quantized_layer_collections=None, bitW=8, bitA=8):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, layer_idx=0, block_idx=0, quantized_layer_collections=None, bitW=8, bitA=8, bitG=8):
         super(BasicBlock, self).__init__()
-        self.conv1 = conv3x3(inplanes, planes, stride, bitW=bitW, bitA=bitA)
+        self.conv1 = conv3x3(inplanes, planes, stride, bitW=bitW, bitA=bitA, bitG=bitG)
         self.bn1 = nn.BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(planes, planes, bitW=bitW, bitA=bitA)
+        self.conv2 = conv3x3(planes, planes, bitW=bitW, bitA=bitA, bitG=bitG)
         self.bn2 = nn.BatchNorm2d(planes)
         self.downsample = downsample
         self.stride = stride
@@ -94,12 +94,13 @@ class Bottleneck(nn.Module):
 
 class ResNet_Cifar(nn.Module):
 
-    def __init__(self, block, layers, num_classes=10, bitW=8, bitA=8):
+    def __init__(self, block, layers, num_classes=10, bitW=8, bitA=8, bitG=8):
         super(ResNet_Cifar, self).__init__()
         self.inplanes = 16
         self.bitW = bitW
         self.bitA = bitA
-        self.conv1 = dorefa_Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False, bitW=bitW, bitA=bitA)
+        self.bitG = bitG
+        self.conv1 = dorefa_Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False, bitW=bitW, bitA=bitA, bitG=bitG)
         self.quantized_layer_collections = {'conv1': self.conv1}
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=True)
@@ -123,7 +124,7 @@ class ResNet_Cifar(nn.Module):
             downsample = nn.Sequential(
                 dorefa_Conv2d(
                     self.inplanes, planes * block.expansion, kernel_size=(1, 1), stride=(stride, stride), bias=False,
-                    bitW=self.bitW, bitA=self.bitA
+                    bitW=self.bitW, bitA=self.bitA, bitG=self.bitG
                 ),
                 nn.BatchNorm2d(planes * block.expansion)
             )
@@ -133,7 +134,7 @@ class ResNet_Cifar(nn.Module):
         layers.append(
             block(
                 self.inplanes, planes, stride, downsample,
-                bitW=self.bitW, bitA=self.bitA,
+                bitW=self.bitW, bitA=self.bitA, bitG=self.bitG,
                 layer_idx=layer_idx, block_idx=0,
                 quantized_layer_collections=self.quantized_layer_collections
             )
@@ -143,9 +144,9 @@ class ResNet_Cifar(nn.Module):
             layers.append(
                 block(
                     self.inplanes, planes,
-                bitW=self.bitW, bitA=self.bitA,
-                layer_idx=layer_idx, block_idx=blk_idx,
-                quantized_layer_collections=self.quantized_layer_collections
+                    bitW=self.bitW, bitA=self.bitA, bitG=self.bitG,
+                    layer_idx=layer_idx, block_idx=blk_idx,
+                    quantized_layer_collections=self.quantized_layer_collections
                 )
             )
 
@@ -211,7 +212,7 @@ if __name__ == '__main__':
 
     import torch
 
-    net = resnet20_cifar(bitW=4, bitA=4)
+    net = resnet20_cifar(bitW=4, bitA=4, bitG=4)
     # """
     inputs = torch.rand([10, 3, 32, 32])
     targets = torch.rand([10, 10])

@@ -19,25 +19,28 @@ import os
 # os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 import argparse
 
-from models.CIFARNet import CIFARNet
+# from models.CIFARNet import CIFARNet
 from models.resnet import resnet20_cifar, resnet32_cifar, resnet44_cifar, resnet56_cifar
-from torch.autograd import Variable
+# from torch.autograd import Variable
 from utils.train import progress_bar, is_int, train, test
 from utils.dataset import get_dataloader
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', '-lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--retrain', '-r', default=None, help='Retrain from a pre-trained model')
-parser.add_argument('--model', '-m', type=str, default='CIFARNet', help='Model arch')
+parser.add_argument('--model', '-m', type=str, default='ResNet20', help='Model arch')
 parser.add_argument('--dataset', '-d', type=str, default='CIFAR10', help='Dataset')
 parser.add_argument('--optimizer', '-o', type=str, default='SGD', help='Optimizer')
-parser.add_argument('--adjust', '-ad', default=30, type=int, help='Training strategy')
+parser.add_argument('--batch_size', '-bs', type=int, default=128, help='Batch size')
+parser.add_argument('--adjust', '-ad', default="30", type=str, help='Training strategy')
 args = parser.parse_args()
 
 use_cuda = torch.cuda.is_available()
 device = 'cuda' if use_cuda else 'cpu'
 model_name = args.model
 dataset_name = args.dataset
+lr = args.lr
+lr_adjust = args.adjust
 
 save_root = './Results/%s-%s' %(model_name, dataset_name)
 if not os.path.exists(save_root):
@@ -46,7 +49,7 @@ if not os.path.exists(save_root):
 # Data
 print('==> Preparing data..')
 
-train_loader = get_dataloader(dataset_name, 'train', 128)
+train_loader = get_dataloader(dataset_name, 'train', args.batch_size)
 test_loader = get_dataloader(dataset_name, 'test', 100)
 
 if dataset_name in ['CIFAR10', 'STL10']:
@@ -86,14 +89,14 @@ if use_cuda:
 criterion = nn.CrossEntropyLoss()
 
 if args.optimizer in ['Adam', 'adam']:
-    optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=5e-4)
+    optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=5e-4)
 else:
-    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=5e-4)
 
 # Begin Training
 ascent_count = 0
 min_train_loss = 1e9
-max_training_epoch = args.ad if is_int(args.ad) else 200
+max_training_epoch = int(lr_adjust) if lr_adjust.isdecimal() else 200
 
 for epoch in range(start_epoch, start_epoch + max_training_epoch):
 
@@ -111,11 +114,11 @@ for epoch in range(start_epoch, start_epoch + max_training_epoch):
         }
         if not os.path.isdir('%s/checkpoint' % (save_root)):
             os.mkdir('%s/checkpoint' % (save_root))
-        torch.save(state, '%s/checkpoint/%s_ckpt.t7' % (save_root, model_name))
+        torch.save(state, '%s/checkpoint/%s-%s-ckpt.t7' % (save_root, model_name, dataset_name))
         best_test_acc = test_acc
         torch.save(net.module.state_dict(), '%s/%s-%s-pretrain.pth' % (save_root, model_name, dataset_name))
 
-    if args.ad == 'adaptive':
+    if lr_adjust == 'adaptive':
 
         if train_loss < min_train_loss:
             min_train_loss = train_loss
@@ -127,6 +130,7 @@ for epoch in range(start_epoch, start_epoch + max_training_epoch):
 
         if ascent_count >= 3:
             optimizer.param_groups[0]['lr'] *= 0.1
+            print("Learning rate decrease to %.2e" % optimizer.param_groups[0]['lr'])
             ascent_count = 0
-            if (optimizer.param_groups[0]['lr']) < (args.lr * 1e-3):
+            if (optimizer.param_groups[0]['lr']) < (lr * 1e-3):
                 break

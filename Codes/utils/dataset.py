@@ -31,8 +31,7 @@ def get_mean_and_std(dataset, n_channels=3):
     return mean, std
 
 
-def get_dataloader(dataset_name, split, batch_size, \
-                   add_split = None, shuffle = True, ratio=-1, num_workers=4):
+def get_dataloader(dataset_name, split, batch_size, add_split = None, shuffle = True, ratio=-1, num_workers=4):
 
     print ('[%s] Loading %s-%s from %s' %(datetime.now(), split, add_split, dataset_name))
 
@@ -262,3 +261,8 @@ def get_lmdb_imagenet(split, batch_size, shuffle = True, num_workers = None):
 
     print('[DATA LOADING] Load %s finish, with number of batches as: %d' %(split, len(loader)))
     return loader
+
+
+if __name__ == '__main__':
+
+    dataset = get_dataloader('CIFAR10', 'train', batch_size=128)

@@ -27,14 +27,24 @@ def save_checkpoint(_net: torch.nn.Module, _optimizer: torch.optim, _epoch, _bes
     }
 
     torch.save(checkpoint, _ckpt_path)
+    print('Save checkpoint')
 
 
 def load_checkpoint(_net: torch.nn.Module, _optimizer: torch.optim.SGD, _ckpt_path):
-
+    print('Loading checkpoint from %s..' % _ckpt_path)
     checkpoint = torch.load(_ckpt_path)
-
+    """
+    try:
+        _net.load_state_dict(checkpoint, strict=False)
+        print('Load state dict finish.')
+    except:
+    """
     _net.load_state_dict(checkpoint['net'], strict=False)
     if _optimizer is not None:
-        _optimizer.load_state_dict(checkpoint['optimizer'])
+        try:
+            _optimizer.load_state_dict(checkpoint['optimizer'])
+        except Exception as e:
+            print(e)
 
+    print('Load checkpoint finish. Start training from %d with lr: %.3e' % (checkpoint['epoch'], _optimizer.param_groups[0]['lr']))
     return checkpoint['epoch'], checkpoint['best_acc']

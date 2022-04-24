@@ -13,20 +13,20 @@ import math
 from module import LearnableThresHold_Conv2d
 
 
-def conv3x3(in_planes, out_planes, stride=1, bitW=8, bitA=8):
+def conv3x3(in_planes, out_planes, stride=1, bitW=8, bitA=8, bitG=32, out_of_domain_kernel=1., out_of_domain_activation=1., out_of_domain_gradient=1., gradient_quantized_type='alth'):
     " 3x3 convolution with padding "
-    return LearnableThresHold_Conv2d(in_planes, out_planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA)
+    return LearnableThresHold_Conv2d(in_planes, out_planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA, bitG=bitG, out_of_domain_kernel=out_of_domain_kernel, out_of_domain_activation=out_of_domain_activation, out_of_domain_gradient=out_of_domain_gradient, gradient_quantized_type=gradient_quantized_type)
 
 
 class BasicBlock(nn.Module):
     expansion=1
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, layer_idx=0, block_idx=0, quantized_layer_collections=None, bitW=8, bitA=8):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, layer_idx=0, block_idx=0, quantized_layer_collections=None, bitW=8, bitA=8, bitG=32, out_of_domain_kernel=1., out_of_domain_activation=1., out_of_domain_gradient=1., gradient_quantized_type='alth'):
         super(BasicBlock, self).__init__()
-        self.conv1 = conv3x3(inplanes, planes, stride, bitW=bitW, bitA=bitA)
+        self.conv1 = conv3x3(inplanes, planes, stride, bitW=bitW, bitA=bitA, bitG=bitG, out_of_domain_kernel=out_of_domain_kernel, out_of_domain_activation=out_of_domain_activation, out_of_domain_gradient=out_of_domain_gradient, gradient_quantized_type=gradient_quantized_type)
         self.bn1 = nn.BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3(planes, planes, bitW=bitW, bitA=bitA)
+        self.conv2 = conv3x3(planes, planes, bitW=bitW, bitA=bitA, bitG=bitG, out_of_domain_kernel=out_of_domain_kernel, out_of_domain_activation=out_of_domain_activation, out_of_domain_gradient=out_of_domain_gradient, gradient_quantized_type=gradient_quantized_type)
         self.bn2 = nn.BatchNorm2d(planes)
         self.downsample = downsample
         self.stride = stride
@@ -56,13 +56,13 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion=4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, bitW=8, bitA=8):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, bitW=8, bitA=8, bitG=32):
         super(Bottleneck, self).__init__()
-        self.conv1 = LearnableThresHold_Conv2d(inplanes, planes, kernel_size=(1, 1), bias=False, bitW=bitW, bitA=bitA)
+        self.conv1 = LearnableThresHold_Conv2d(inplanes, planes, kernel_size=(1, 1), bias=False, bitW=bitW, bitA=bitA, bitG=bitG)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = LearnableThresHold_Conv2d(planes, planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA)
+        self.conv2 = LearnableThresHold_Conv2d(planes, planes, kernel_size=(3, 3), stride=(stride, stride), padding=1, bias=False, bitW=bitW, bitA=bitA, bitG=bitG)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = LearnableThresHold_Conv2d(planes, planes * 4, kernel_size=(1, 1), bias=False, bitW=bitW, bitA=bitA)
+        self.conv3 = LearnableThresHold_Conv2d(planes, planes * 4, kernel_size=(1, 1), bias=False, bitW=bitW, bitA=bitA, bitG=bitG)
         self.bn3 = nn.BatchNorm2d(planes*4)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -91,16 +91,31 @@ class Bottleneck(nn.Module):
         return out
 
 
-
 class ResNet_Cifar(nn.Module):
 
-    def __init__(self, block, layers, num_classes=10, bitW=8, bitA=8):
+    def __init__(self, block, layers, num_classes=10, bitW=8, bitA=8, bitG=32, out_of_domain_kernel=1., out_of_domain_activation=1., out_of_domain_gradient=1., gradient_quantized_type='alth'):
         super(ResNet_Cifar, self).__init__()
         self.inplanes = 16
         self.bitW = bitW
         self.bitA = bitA
-        self.conv1 = LearnableThresHold_Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False, bitW=bitW, bitA=bitA)
+        self.bitG = bitG
+        self.out_of_domain_kernel = out_of_domain_kernel
+        self.out_of_domain_activation = out_of_domain_activation
+        self.out_of_domain_gradient = out_of_domain_gradient
+        self.gradient_quantized_type = gradient_quantized_type
+        # """
+        self.conv1 = LearnableThresHold_Conv2d(
+            3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False,
+            bitW=bitW, bitA=bitA, bitG=bitG,
+            out_of_domain_kernel=out_of_domain_kernel, out_of_domain_activation=out_of_domain_activation, 
+            out_of_domain_gradient=out_of_domain_gradient,
+            gradient_quantized_type=gradient_quantized_type
+        )
         self.quantized_layer_collections = {'conv1': self.conv1}
+        """
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
+        self.quantized_layer_collections = {}
+        """
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(block, 16, layers[0], layer_idx=1)
@@ -123,7 +138,9 @@ class ResNet_Cifar(nn.Module):
             downsample = nn.Sequential(
                 LearnableThresHold_Conv2d(
                     self.inplanes, planes * block.expansion, kernel_size=(1, 1), stride=(stride, stride), bias=False,
-                    bitW=self.bitW, bitA=self.bitA
+                    bitW=self.bitW, bitA=self.bitA, bitG=self.bitG,
+                    out_of_domain_kernel=self.out_of_domain_kernel, out_of_domain_activation=self.out_of_domain_activation, out_of_domain_gradient=self.out_of_domain_gradient,
+                    gradient_quantized_type=self.gradient_quantized_type
                 ),
                 nn.BatchNorm2d(planes * block.expansion)
             )
@@ -133,7 +150,9 @@ class ResNet_Cifar(nn.Module):
         layers.append(
             block(
                 self.inplanes, planes, stride, downsample,
-                bitW=self.bitW, bitA=self.bitA,
+                bitW=self.bitW, bitA=self.bitA, bitG=self.bitG,
+                out_of_domain_kernel=self.out_of_domain_kernel, out_of_domain_activation=self.out_of_domain_activation, out_of_domain_gradient=self.out_of_domain_gradient,
+                gradient_quantized_type=self.gradient_quantized_type,
                 layer_idx=layer_idx, block_idx=0,
                 quantized_layer_collections=self.quantized_layer_collections
             )
@@ -143,9 +162,11 @@ class ResNet_Cifar(nn.Module):
             layers.append(
                 block(
                     self.inplanes, planes,
-                bitW=self.bitW, bitA=self.bitA,
-                layer_idx=layer_idx, block_idx=blk_idx,
-                quantized_layer_collections=self.quantized_layer_collections
+                    bitW=self.bitW, bitA=self.bitA, bitG=self.bitG,
+                    out_of_domain_kernel=self.out_of_domain_kernel, out_of_domain_activation=self.out_of_domain_activation, out_of_domain_gradient=self.out_of_domain_gradient,
+                    gradient_quantized_type=self.gradient_quantized_type,
+                    layer_idx=layer_idx, block_idx=blk_idx,
+                    quantized_layer_collections=self.quantized_layer_collections
                 )
             )
 
@@ -211,7 +232,11 @@ if __name__ == '__main__':
 
     import torch
 
-    net = resnet20_cifar(bitW=4, bitA=4)
+    net = resnet20_cifar(
+        bitW=4, bitA=4, bitG=4,
+        out_of_domain_kernel=10, out_of_domain_activation=10, out_of_domain_gradient=10,
+        gradient_quantized_type='maq'
+    )
     """
     inputs = torch.rand([10, 3, 32, 32])
     targets = torch.rand([10, 10])

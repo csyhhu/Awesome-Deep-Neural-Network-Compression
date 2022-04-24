@@ -11,6 +11,25 @@ from utils.train import progress_bar, accuracy, AverageMeter
 import time
 import numpy as np
 
+def direct_biased_quantize(x, _bit):
+    """
+    Quantize x (within [0, 1] to discrete value), without processing the gradient
+    Args:
+        x:
+        _bit:
+
+    Returns:
+
+    """
+    n = 2 ** _bit  - 1
+    _round_x = torch.round(x * n)  # [0, 1] => [0, n]
+    # {-n, n, 1} => {-n, n-1, 1}
+    _quantized_bit = torch.clip(
+        _round_x, 0, n
+    )
+    return _quantized_bit / n, _quantized_bit
+
+
 class Function_STE(torch.autograd.Function):
 
     @staticmethod
@@ -218,4 +237,7 @@ def test(net, quantized_type, test_loader, use_cuda = True, dataset_name='CIFAR1
 
 
 if __name__ == '__main__':
-    pass
+
+    import torch
+    inputs = torch.rand([10, 1])
+    outputs = direct_biased_quantize(inputs, 1)

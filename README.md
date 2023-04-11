@@ -8,9 +8,3 @@
 This is a developing branch focused on implementation of state-of-the-art model compression method.
 
 Please refer to the `main` branch for paper list.
-
-## Under Progress
-- [INQ](./Codes/INQ): [Incremental Network Quantization]()
-- [QIL](./Codes/QIL): [Learning to Quantize Deep Networks by Optimizing Quantization Intervals with Task Loss]()
-- [Asymmetric-MAQ-XNOR](./Codes/Asymmetric-MAQ-XNOR): A training-aware quantization method to accumulate layer-wise quantization threshold.
-- [Asymmetric-LTH](./Codes/Asymmetric-LTH): A training-aware quantization method to learn layer-wise quantization threshold, inspired by [Learned Step Size Quantization](https://arxiv.org/abs/1902.08153)

@@ -19,12 +19,13 @@ from train import train
 from utils.dataset import get_dataloader
 from utils.recorder import Recorder
 from utils.miscellaneous import save_checkpoint, load_checkpoint
+from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', '-lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--model', '-m', type=str, default='ResNet20', help='Model arch')
 parser.add_argument('--dataset', '-d', type=str, default='CIFAR10', help='Dataset')
-parser.add_argument('--optimizer', '-o', type=str, default='SGD', help='Optimizer')
+parser.add_argument('--optimizer', '-o', type=str, default='SGD-M', help='Optimizer')
 parser.add_argument('--batch_size', '-bs', default=128, type=int, help='Batch size')
 parser.add_argument('--max_epoch', '-epoch', default=30, type=int, help='Number of maximum epoch')
 parser.add_argument('--lr_adjust', '-ad', default=10, type=int, help='Training strategy')
@@ -48,16 +49,16 @@ if args.ckpt_path is None:
     if not os.path.exists(ckpt_root):
         os.makedirs(ckpt_root)
     ckpt_path = os.path.join(
-        ckpt_root, '%s-bitW-%d-bitA-%d-bitG-%d-lr-adjust-%d-epoch-%d%s.ckpt' % (
-            args.optimizer, args.bitW, args.bitA, args.bitG, args.lr_adjust,
+        ckpt_root, '%s-bitW-%d-bitA-%d-bitG-%d-lr-%.0e-adjust-%d-epoch-%d%s.ckpt' % (
+            args.optimizer, args.bitW, args.bitA, args.bitG, args.lr, args.lr_adjust,
             args.max_epoch, '-%s' % args.exp_spec if args.exp_spec is not None else ''
         )
     )
 else:
     ckpt_path = args.ckpt_path
 
-save_root = './Results/%s-%s/dorefa/%s-bitW-%d-bitA-%d-bitG-%d-lr-adjust-%d-epoch-%d%s%s' %(
-    model_name, dataset_name, args.optimizer, args.bitW, args.bitA, args.bitG, args.lr_adjust, args.max_epoch,
+save_root = './Results/%s-%s/dorefa/%s-bitW-%d-bitA-%d-bitG-%d-lr-%.0e-adjust-%d-epoch-%d%s%s' %(
+    model_name, dataset_name, args.optimizer, args.bitW, args.bitA, args.bitG, args.lr, args.lr_adjust, args.max_epoch,
     "-pretrain" if args.pretrain else "", '-%s' % args.exp_spec if args.exp_spec is not None else ''
 )
 
@@ -87,8 +88,10 @@ else:
 
 if args.optimizer in ['Adam', 'adam']:
     optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=5e-4)
-else:
+elif args.optimizer in ['SGD-M']:
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+else:
+    optimizer = optim.SGD(net.parameters(), lr=args.lr)
 
 if args.retrain:
     start_epoch, best_test_acc = load_checkpoint(net, optimizer, ckpt_path)
@@ -97,7 +100,8 @@ else:
     best_test_acc = 0
 
 if args.pretrain:
-    load_checkpoint(net, None, args.pretrain_path)
+    print('Load pretrained model from %s' % (args.pretrain_path))
+    net.load_state_dict(torch.load(args.pretrain_path), strict=False)
 
 if use_cuda:
     net.cuda()
@@ -115,7 +119,9 @@ max_training_epoch = args.max_epoch
 # Initialize recorder for general training
 recorder = Recorder(SummaryPath=save_root)
 recorder.write_arguments([args])
+writer = SummaryWriter(save_root)
 # Initialize recorder for threshold
+"""
 weight_quantization_error_recorder_collection = {}
 input_quantization_error_recorder_collection = {}
 gradient_quantization_error_collection = {}
@@ -129,16 +135,20 @@ for name, layer in net.quantized_layer_collections.items():
     input_quantization_error_recorder_collection[name] = open('%s/%s/input_quantization_error.txt' % (save_root, name), 'a+')
     weight_bit_allocation_collection[name] = open('%s/%s/weight_bit_allocation.txt' % (save_root, name), 'a+')
     input_bit_allocation_collection[name] = open('%s/%s/input_bit_allocation.txt' % (save_root, name), 'a+')
+"""
 
 for epoch in range(start_epoch, start_epoch + max_training_epoch):
 
     print('Epoch: [%3d]' % epoch)
     train_loss, train_acc = train(
-        net, train_loader, optimizer, criterion, _device=device, _recorder=recorder,
-        _weight_quantization_error_collection=weight_quantization_error_recorder_collection,
-        _input_quantization_error_collection=input_quantization_error_recorder_collection,
-        _weight_bit_allocation_collection=weight_bit_allocation_collection,
-        _input_bit_allocation_collection=input_bit_allocation_collection
+        net, train_loader, optimizer, criterion,
+        _bitW=args.bitW, _bitA=args.bitA, _bitG=args.bitG,
+        _device=device, _recorder=recorder, _writer=writer,
+        _n_batch_used=100, _epoch_idx=epoch
+        # _weight_quantization_error_collection=weight_quantization_error_recorder_collection,
+        # _input_quantization_error_collection=input_quantization_error_recorder_collection,
+        # _weight_bit_allocation_collection=weight_bit_allocation_collection,
+        # _input_bit_allocation_collection=input_bit_allocation_collection
     )
     test_loss, test_acc = test(
         net, test_loader, criterion, _device=device, _recorder=recorder
@@ -172,9 +182,11 @@ for epoch in range(start_epoch, start_epoch + max_training_epoch):
         print('Learning rate decrease to %e' % optimizer.param_groups[0]['lr'])
 
 recorder.close()
+"""
 for collection in [
     weight_quantization_error_recorder_collection, input_quantization_error_recorder_collection,
     weight_bit_allocation_collection, input_bit_allocation_collection
 ]:
     for recorder in collection.values():
         recorder.close()
+"""

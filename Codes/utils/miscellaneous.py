@@ -21,7 +21,7 @@ def save_checkpoint(_net: torch.nn.Module, _optimizer: torch.optim, _epoch, _bes
 
     checkpoint = {
         'net': _net.state_dict(),
-        'optimizer': _optimizer.state_dict(),
+        'optimizer': _optimizer.state_dict() if _optimizer is not None else None,
         'epoch': _epoch,
         'best_acc': _best_acc
     }

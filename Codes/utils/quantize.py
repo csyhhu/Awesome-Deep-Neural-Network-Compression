@@ -11,6 +11,12 @@ from utils.train import progress_bar, accuracy, AverageMeter
 import time
 import numpy as np
 
+
+def gaussian(x, mu, sigma):
+
+    return 1 / (sigma * torch.sqrt(torch.tensor(2 * np.pi))) * torch.exp(-0.5 * torch.pow((x - mu / sigma), 2))
+
+
 def direct_biased_quantize(x, _bit):
     """
     Quantize x (within [0, 1] to discrete value), without processing the gradient
@@ -21,13 +27,16 @@ def direct_biased_quantize(x, _bit):
     Returns:
 
     """
-    n = 2 ** _bit  - 1
-    _round_x = torch.round(x * n)  # [0, 1] => [0, n]
-    # {-n, n, 1} => {-n, n-1, 1}
-    _quantized_bit = torch.clip(
-        _round_x, 0, n
-    )
-    return _quantized_bit / n, _quantized_bit
+    if _bit == 32:
+        return x, x
+    else:
+        n = 2 ** _bit  - 1
+        _round_x = torch.round(x * n)  # [0, 1] => [0, n]
+        # {-n, n, 1} => {-n, n-1, 1}
+        _quantized_bit = torch.clip(
+            _round_x, 0, n
+        )
+        return _quantized_bit / n, _quantized_bit
 
 
 class Function_STE(torch.autograd.Function):
@@ -60,6 +69,191 @@ class Function_sign(torch.autograd.Function):
         gate = (torch.abs(weight) <= 1).float()
         grad_inputs = grad_outputs * gate
         return grad_inputs, None
+
+
+class Function_biased_quantize(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, _normalized_weight, _bit):
+        """
+        Args:
+            ctx:
+            _normalized_weight: weights within [-1, 1]
+            _bit:
+        Returns:
+        """
+        ctx.save_for_backward(_normalized_weight)
+        n = 2 ** _bit - 1
+        _round_x = torch.round(_normalized_weight * n)  # [-1, 1] => [-n, n]
+        # {-n, n, 1} => {-n, n-1, 1}
+        _quantized_bit = torch.clip(
+            _round_x, 0, n - 1
+        )
+        return _quantized_bit / n, _quantized_bit
+
+    @staticmethod
+    def backward(ctx, _grad_normalized_quantized_weight, _grad_quantized_bit):
+        return _grad_normalized_quantized_weight, None
+
+
+class Function_biased_log2_quantize(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, _normalized_x, _bit):
+        ctx.save_for_backward(_normalized_x)
+        n = 2 ** _bit
+        # uni_range = torch.arange(0, n) / n
+        # [0, 1] => [1, 2] => [0, 1]
+        log_x = torch.log2(_normalized_x + 1)
+        _round_x = torch.round(log_x * n)  # [0, 1] => [0, n] => {0, n-1}
+        _quantized_bit = torch.clip(_round_x, 0, n - 1)
+        # {0, n-1} => {0, 1} => {1, 2} => {0, 1}
+        _quantized_x = 2 ** (_quantized_bit / n) - 1
+
+        return _quantized_x, _quantized_bit
+
+    @staticmethod
+    def backward(ctx, _grad_normalized_quantized_weight, _grad_quantized_bit):
+        return _grad_normalized_quantized_weight, None
+
+
+
+class Function_log_quantize(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, _normalized_x, _bit):
+        ctx.save_for_backward(_normalized_x)
+        n = 2 ** (_bit - 1)
+        sign = torch.sign(_normalized_x)
+        # [-1, 1] => [0, 1]
+        _abs_x = torch.abs(_normalized_x)
+        # [0, 1] => [1, 2]
+        _shift_x = _abs_x + 1
+        # [1, 2] => [0, log(2)] => [0, 1] => [-1, 1]
+        _sign_log_x = sign * torch.log(_shift_x) / torch.log(torch.tensor(2.))
+        # [-1, 1] => [-n, n] => {-n ,n} => {-n, n-1}
+        _quantized_bit = torch.clamp(torch.round(_sign_log_x * n), -n, n - 1)
+        # {-n, n} => {-1, 1} => {0, 1}
+        _abs_quantized_log_x = torch.abs(_quantized_bit) / n
+        # {0, 1} => {0, log(2)} => {1, 2} => {0, 1} => {-1, 1}
+        _quantized_normalized_x = sign * (torch.exp(_abs_quantized_log_x * torch.log(torch.tensor(2.))) - 1)
+
+        return _quantized_normalized_x, _quantized_bit
+
+    @staticmethod
+    def backward(ctx, _grad_quantized_symmetric_normalized_x, _grad_quantized_bit):
+        return _grad_quantized_symmetric_normalized_x, None
+
+
+class Function_log_sqrt_quantize(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, _symmetric_normalized_x, _bit):
+        ctx.save_for_backward(_symmetric_normalized_x)
+
+        sign = torch.sign(_symmetric_normalized_x)
+        # [-1, 1] => [0, 1]
+        _abs_x = torch.abs(_symmetric_normalized_x)
+        # [0, 1] => [1, 2]
+        _shift_x = _abs_x + 1
+        # [1, 2] => [0, log(2)] => [0, 1]
+        _log_x = torch.log(_shift_x) / torch.log(torch.tensor(2.))
+        # [0, 1] => [0, 1]
+        _sqrt_x = torch.sqrt(_log_x)
+        # [0, 1] => {0, 1}
+        _quantized_sqrt_x, _quantized_bit = direct_biased_quantize(_sqrt_x, _bit)
+        # {0, 1} => {0, 1} {0, log(2)} => {1, 2} => {0, 1} => {-1, 1}
+        _quantized_symmetric_normalized_x = (torch.exp(torch.pow(_quantized_sqrt_x, 2) * torch.log(torch.tensor(2.))) - 1) * sign
+
+        return _quantized_symmetric_normalized_x, _quantized_bit
+
+    @staticmethod
+    def backward(ctx, _grad_quantized_symmetric_normalized_x, _grad_quantized_bit):
+        return _grad_quantized_symmetric_normalized_x, None
+
+
+class Function_log10_quantize(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, _symmetric_normalized_x, _bit):
+        ctx.save_for_backward(_symmetric_normalized_x)
+
+        sign = torch.sign(_symmetric_normalized_x)
+        # [-1, 1] => [0, 1]
+        _abs_x = torch.abs(_symmetric_normalized_x)
+        # [0, 1] => [1, 2]
+        _shift_x = _abs_x + 1
+        # [1, 2] => [0, log10(2)] => [0, 1]
+        _log_x = torch.log10(_shift_x) / torch.log10(torch.tensor(2.))
+        # [0, 1] => {0, 1}
+        _quantized_log_x, _quantized_bit = direct_biased_quantize(_log_x, _bit)
+        # {0, 1} => {0, log10(2)} => {1, 2} => {0, 1} => {-1, 1}
+        _quantized_symmetric_normalized_x = (10 ** (_quantized_log_x * torch.log2(torch.tensor(2.))) - 1) * sign
+
+        return _quantized_symmetric_normalized_x, _quantized_bit
+
+    @staticmethod
+    def backward(ctx, _grad_quantized_symmetric_normalized_x, _grad_quantized_bit):
+        return _grad_quantized_symmetric_normalized_x, None
+
+
+class Function_gaussian_quantize(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, _symmetric_x, _bit):
+
+        ctx.save_for_backward(_symmetric_x)
+        # """
+        n = 2 ** (_bit - 1)
+        uni_range = torch.arange(-n, n) / n
+        sign = torch.sign(uni_range)
+        print(uni_range)
+        # log_range = torch.exp(uni_range + 1) / torch.exp(torch.tensor(1.))
+        # log_range = torch.cat([-log_range + 1, log_range - 1])
+        log_range = sign * (1 - gaussian(uni_range, 0, 1) / gaussian(torch.zeros([]), 0, 1)) / gaussian(torch.ones([]), 0, 1)
+        print(log_range)
+        # """
+
+        _symmetric_quantized_x, _quantized_bit = project(_symmetric_x, log_range, 2 ** _bit)
+
+        return _symmetric_quantized_x, _quantized_bit
+
+    @staticmethod
+    def backward(ctx, _grad_symmetric_quantized_x, _grad_quantized_bit):
+        return _grad_symmetric_quantized_x, None
+
+
+def project(x, available_set, n):
+
+    index = torch.argmin(torch.abs(x.view(-1, 1) - available_set.view(1, -1)), dim=1)
+    projected_x = torch.matmul(
+        torch.nn.functional.one_hot(index.type(torch.LongTensor), n).type(torch.FloatTensor),
+        available_set.view(-1, 1)
+    )
+    return projected_x, index.view(-1)
+
+
+class Function_biased_gradient_quantize(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, _input, _bit, _left_threshold, _right_threshold):
+        ctx.save_for_backward(_input, _bit, _left_threshold, _right_threshold)
+        return _input
+
+    @staticmethod
+    def backward(ctx, _grad_output):
+        _input, _bit, _left_threshold, _right_threshold = ctx.saved_tensors
+        _clipped_grad_output = torch.clip(_grad_output, _left_threshold, _right_threshold)
+        _shifted_grad_output = (_clipped_grad_output - _left_threshold) / (_right_threshold - _left_threshold)
+
+        if _bit < 0 or _bit == 32:
+            _normalized_quantized_grad_output, _quantized_bit_grad_output = direct_biased_quantize(_shifted_grad_output, 8)
+        else:
+            _normalized_quantized_grad_output, _quantized_bit_grad_output = direct_biased_quantize(_shifted_grad_output, _bit)
+
+        _quantized_grad_output = _normalized_quantized_grad_output * (_right_threshold - _left_threshold) + _left_threshold
+
+        return _quantized_grad_output, None, None, None
 
 
 class Function_unbiased_quantize(torch.autograd.Function):
@@ -104,6 +298,7 @@ class Function_unbiased_quantize_STE(torch.autograd.Function):
     def backward(ctx, _grad_normalized_quantized_weight, _grad_quantized_bit):
         _mask, = ctx.saved_tensors
         return _grad_normalized_quantized_weight * _mask, None, None
+
 
 
 class quantized_CNN(nn.Conv2d):
@@ -239,5 +434,117 @@ def test(net, quantized_type, test_loader, use_cuda = True, dataset_name='CIFAR1
 if __name__ == '__main__':
 
     import torch
-    inputs = torch.rand([10, 1])
-    outputs = direct_biased_quantize(inputs, 1)
+    import matplotlib.pyplot as plt
+
+    # plt.style.use('ggplot')
+
+    N = 1000
+    bins = 100
+    n_trial = 10
+    bit = 4
+    n = 2 ** bit
+    n_loss_list = [[], [], []]
+    # """
+    for _ in range(n_trial):
+
+        inputs = torch.normal(mean=torch.zeros(N), std=torch.ones(N))
+        _min, _max = inputs.min(), inputs.max()
+        _max_abs = torch.max(-_min, _max)
+        _mid = (_min + _max) / 2
+
+        normalized_asymmetric_inputs = (inputs - _min) / (_max - _min)
+        quantized_normalized_uni_outputs, quantized_uni_bits = Function_biased_quantize.apply(normalized_asymmetric_inputs, bit)
+        quantized_uni_outputs = quantized_normalized_uni_outputs * (_max - _min) + _min
+
+        normalized_symmetric_inputs = (inputs - _mid) / (_max_abs - _mid)
+
+        quantized_normalized_log_outputs, quantized_log_bits = Function_log_quantize.apply(normalized_symmetric_inputs, bit)
+        quantized_log_outputs = quantized_normalized_log_outputs * (_max_abs - _mid) + _mid
+
+        # quantized_normalized_log10_outputs, quantized_log10_bits = Function_log10_quantize.apply(normalized_symmetric_inputs, bit)
+        # quantized_log10_outputs = quantized_normalized_log10_outputs * (_max_abs - _mid) + _mid
+
+        quantized_normalized_log_sqrt_outputs, quantized_log_sqrt_bits = Function_log_sqrt_quantize.apply(normalized_symmetric_inputs, bit)
+        quantized_log_sqrt_outputs = quantized_normalized_log_sqrt_outputs * (_max_abs - _mid) + _mid
+
+        # plt.figure()
+        # plt.subplot(4, 3, 1)
+        # plt.hist(inputs.numpy(), bins=bins)
+        # plt.subplot(4, 3, 2)
+        # plt.hist(normalized_asymmetric_inputs.numpy(), bins=bins)
+        # plt.subplot(4, 3, 3)
+        # plt.hist(normalized_symmetric_inputs.numpy(), bins=bins)
+        #
+        # plt.subplot(4, 3, 4)
+        # plt.hist(quantized_normalized_uni_outputs.numpy(), bins=bins)
+        # plt.subplot(4, 3, 5)
+        # plt.hist(quantized_uni_bits.numpy(), bins=bins)
+        # plt.subplot(4, 3, 6)
+        # plt.hist(quantized_uni_outputs.numpy(), bins=bins)
+        #
+        # plt.subplot(4, 3, 7)
+        # plt.hist(quantized_normalized_log_outputs.numpy(), bins=bins)
+        # plt.subplot(4, 3, 8)
+        # plt.hist(quantized_log_bits.numpy(), bins=bins)
+        # plt.subplot(4, 3, 9)
+        # plt.hist(quantized_log_outputs.numpy(), bins=bins)
+        #
+        # plt.subplot(4, 3, 10)
+        # plt.hist(quantized_normalized_log_sqrt_outputs.numpy(), bins=bins)
+        # plt.subplot(4, 3, 11)
+        # plt.hist(quantized_log_sqrt_bits.numpy(), bins=bins)
+        # plt.subplot(4, 3, 12)
+        # plt.hist(quantized_log_sqrt_outputs.numpy(), bins=bins)
+        # plt.show()
+
+        n_loss_list[0].append(torch.mean(torch.abs(quantized_uni_outputs - inputs)).item())
+        n_loss_list[1].append(torch.mean(torch.abs(quantized_log_outputs - inputs)).item())
+        # n_loss_list[2].append(torch.mean(torch.abs(quantized_log10_outputs - inputs)).item())
+        n_loss_list[2].append(torch.mean(torch.abs(quantized_log_sqrt_outputs - inputs)).item())
+
+
+    for n_loss in n_loss_list:
+        print("%.4e(%.4e)" % (np.mean(n_loss), np.std(n_loss)))
+    # """
+
+    """
+    inputs = torch.normal(mean=torch.zeros(N), std=torch.ones(N))
+    # inputs = torch.exp(torch.rand([N]))
+    _min, _max = inputs.min(), inputs.max()
+    _sign = torch.sign(inputs)
+    normalized_inputs = (inputs - _min) / (_max - _min)
+    log_outputs, log_outputs_bits, log_outputs_log = Function_biased_log_quantize.apply(normalized_inputs, bit)
+    plt.subplot(1, 3, 1)
+    plt.hist(normalized_inputs.numpy(), bins=bins)
+    plt.subplot(1, 3, 2)
+    plt.hist(log_outputs.numpy(), bins=bins)
+    plt.subplot(1, 3, 3)
+    plt.hist(log_outputs_log.numpy(), bins=bins)
+    plt.show()
+    """
+
+    # The following test the functionality of project
+    """
+    inputs = torch.normal(mean=torch.zeros(N), std=torch.ones(N))
+    quantized_points = torch.rand([n])
+    projected_input = project(inputs, quantized_points, n)
+    plt.subplot(1, 2, 1)
+    plt.hist(inputs.numpy(), bins=bins)
+    plt.subplot(1, 2, 2)
+    plt.hist(projected_input.numpy(), bins=bins)
+    plt.show()
+    """
+
+    # The following test the functionalty of Function_log_quantize
+    """
+    inputs = torch.normal(mean=torch.zeros(N), std=torch.ones(N))
+    normalized_inputs = inputs / torch.max(torch.abs(inputs))
+    quantized_inputs, quantized_bits = Function_log_quantize.apply(normalized_inputs, bit)
+    plt.subplot(1, 3, 1)
+    plt.hist(normalized_inputs.numpy(), bins=bins)
+    plt.subplot(1, 3, 2)
+    plt.hist(quantized_inputs.numpy(), bins=bins)
+    plt.subplot(1, 3, 3)
+    plt.hist(quantized_bits.numpy(), bins=bins)
+    plt.show()
+    """

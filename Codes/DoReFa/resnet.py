@@ -100,8 +100,10 @@ class ResNet_Cifar(nn.Module):
         self.bitW = bitW
         self.bitA = bitA
         self.bitG = bitG
-        self.conv1 = dorefa_Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False, bitW=bitW, bitA=bitA, bitG=bitG)
-        self.quantized_layer_collections = {'conv1': self.conv1}
+        # self.conv1 = dorefa_Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False, bitW=bitW, bitA=bitA, bitG=bitG)
+        # self.quantized_layer_collections = {'conv1': self.conv1}
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
+        self.quantized_layer_collections = {}
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=True)
         self.layer1 = self._make_layer(block, 16, layers[0], layer_idx=1)

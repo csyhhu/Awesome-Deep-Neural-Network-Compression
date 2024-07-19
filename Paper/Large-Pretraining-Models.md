@@ -5,6 +5,7 @@
 - LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale
 - Understanding INT4 Quantization for Transformer Models: Latency Speedup, Composability, and Failure Cases
 - OPTQ: Accurate Quantization for Generative Pre-trained Transformers
+- QLoRA: Efficient Finetuning of Quantized LLMs
 
 # Pruning
 - SparseGPT: Massive Language Models Can be Accurately Pruned in One-Shot

@@ -18,3 +18,8 @@
 
 ## Mix-Precision
 - Delta-CoMe: Training-Free Delta-Compression with Mixed-Precision for Large Language Models
+
+## Equivalent Transformation
+- SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
+- OmniQuant: Omnidirectionally Calibrated Quantization for Large Language Models
+- AffineQuant: Affine Transformation Quantization for Large Language Models

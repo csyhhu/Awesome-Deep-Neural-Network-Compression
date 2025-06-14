@@ -20,3 +20,6 @@ Linear attention aims at reducing computation complexity in attention from $O(N^
 
 - FlashTransformers
 - I/O Complexity of Attention, or How Optimal is FlashAttention?
+
+# Token Compression
+- Token Merging for Fast Stable Diffusion

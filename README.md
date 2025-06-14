@@ -1,4 +1,4 @@
-![Maintenance](https://img.shields.io/maintenance/yes/2023?style=plastic)
+![Maintenance](https://img.shields.io/maintenance/yes/2025?style=plastic)
 ![GitHub last commit](https://img.shields.io/github/last-commit/csyhhu/Awesome-Deep-Neural-Network-Compression.svg?style=flat-square)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/csyhhu/Awesome-Deep-Neural-Network-Compression.svg?style=flat-square)
 [![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg?style=flat-square)](https://GitHub.com/Naereen/ama)

@@ -11,7 +11,7 @@
 * Explicit Loss-Error-Aware Quantization for Low-Bit Deep Neural Networks
 * Value-aware Quantization for Training and Inference of Neural Networks
 * Training Competitive Binary Neural Networks from Scratch
-*  Linear Symmetric Quantization of Neural Networks for Low-precision Integer Hardware 
+* Linear Symmetric Quantization of Neural Networks for Low-precision Integer Hardware 
 - AutoQ: Automated Kernel-Wise Neural Network Quantization 
 - Additive Powers-of-Two Quantization: A Non-uniform Discretization for Neural Networks
 - Learned Step Size Quantization

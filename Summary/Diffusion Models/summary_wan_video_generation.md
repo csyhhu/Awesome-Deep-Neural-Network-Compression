@@ -338,7 +338,7 @@ $\hat{z}_1 \sim \mathcal{N}(0,I) \in \mathbb{R}^{21 \times 90 \times 90 \times 1
 
 每步执行：
 1. **条件前向**：$\hat{z}_\tau + c_{txt} \to \text{DiT} \to u_{\text{cond}}$
-2. **无条���前向**：$\hat{z}_\tau + c_{\emptyset} \to \text{DiT} \to u_{\text{uncond}}$
+2. **无条件前向**：$\hat{z}_\tau + c_{\emptyset} \to \text{DiT} \to u_{\text{uncond}}$
 3. **CFG 融合**：$u_{\text{cfg}} = u_{\text{uncond}} + w \cdot (u_{\text{cond}} - u_{\text{uncond}})$，$w$ 通常 5-7
 4. **ODE 步进**：$\hat{z}_{\tau-h} = \hat{z}_\tau - u_{\text{cfg}} \cdot h$，$h=1/50$
 
@@ -503,3 +503,355 @@ DDPM 的原始工作（Ho et al. 2020）确实在像素空间成功生成了 256
 | **VAE Encoder** | 把像素视频压缩成潜变量（训练用） | 像素空间 → 潜空间 |
 
 DiT 通过 Cross-Attention 在训练中自动学到文本语义到潜空间结构的映射：`"cherry blossoms" → 粉色色块分布`、`"riding bicycle" → 运动模糊模式`、`"tracking shot" → 全局平移运动`。推理时从纯噪声出发，每步根据当前状态+文本条件+时间步预测"往哪个方向走"，50 步后得到 VAE Decoder 可还原的干净潜变量。DiT 永远不碰像素，只管潜空间。
+
+---
+
+### Q10: 详细介绍 CFG（Classifier-Free Guidance）
+
+#### 背景：为什么需要"引导"？
+
+扩散模型学习的是数据分布 $p(\mathbf{x} \mid \mathbf{c})$，但直接用学到的分布采样，生成结果往往"不够好"——画面模糊、文本对齐弱。根本矛盾在于**高似然 vs 高保真**：模型如果能生成所有可能的"猫"，倾向于输出"各种猫的平均值"（safe but boring）；实际需要的是"最具猫特征的猫"。CFG 就是扩散模型的"截断"机制。
+
+#### 前身：分类器引导（Classifier Guidance）
+
+Dhariwal & Nichol (2021) 提出额外训练一个**噪声图像分类器** $p_\theta(\mathbf{c} \mid \mathbf{z}_\lambda)$，在采样每一步用分类器的梯度"推动"生成方向：
+
+$$\tilde{\boldsymbol{\epsilon}}_\theta(\mathbf{z}_\lambda, \mathbf{c}) = \boldsymbol{\epsilon}_\theta(\mathbf{z}_\lambda, \mathbf{c}) - w \cdot \sigma_\lambda \nabla_{\mathbf{z}_\lambda} \log p_\theta(\mathbf{c} \mid \mathbf{z}_\lambda)$$
+
+**问题**：需要额外训练分类器（成本高），噪声图像上训练分类器难，且文本等复杂条件无法用于分类器引导。
+
+#### CFG 核心思想
+
+Ho & Salimans (2022) 的关键洞察：**分类器引导中的 $\nabla \log p(\mathbf{c} \mid \mathbf{z})$ 可以从扩散模型自身推导出来，不需要额外分类器。**
+
+根据贝叶斯公式：
+
+$$\nabla_{\mathbf{z}_\lambda} \log p(\mathbf{c} \mid \mathbf{z}_\lambda) = \nabla_{\mathbf{z}_\lambda} \log p(\mathbf{z}_\lambda \mid \mathbf{c}) - \nabla_{\mathbf{z}_\lambda} \log p(\mathbf{z}_\lambda)$$
+
+右边两项对应**条件得分** $\boldsymbol{\epsilon}_\theta(\mathbf{z}_\lambda, \mathbf{c})$ 和**无条件得分** $\boldsymbol{\epsilon}_\theta(\mathbf{z}_\lambda)$。代入得分与 $\epsilon$ 的关系 $\boldsymbol{\epsilon}_\theta \approx -\sigma_\lambda \nabla \log p$，得 CFG 核心公式：
+
+$$\boxed{\tilde{\boldsymbol{\epsilon}}_\theta(\mathbf{z}_\lambda, \mathbf{c}) = (1+w) \cdot \boldsymbol{\epsilon}_\theta(\mathbf{z}_\lambda, \mathbf{c}) - w \cdot \boldsymbol{\epsilon}_\theta(\mathbf{z}_\lambda)}$$
+
+在 Wan 的 Flow Matching 框架中，因为预测的是速度场 $u$ 而非噪声 $\epsilon$，等价写为（参见 Q2 Step 4）：
+
+$$u_{\text{cfg}} = u_{\text{uncond}} + w \cdot (u_{\text{cond}} - u_{\text{uncond}})$$
+
+#### 训练：一个网络同时学会两份任务
+
+**训练算法**（伪代码）：
+
+```
+输入: 无条件概率 p_uncond（通常 0.1~0.2）
+
+循环每个训练步骤:
+    (x, c) ← 从数据集采样（视频潜变量 + 文本）
+    c ← ∅  以概率 p_uncond        # ← 随机丢弃文本条件
+    t ← 采样时间步
+    x_t = t·x + (1-t)·x_0          # 加噪
+    计算损失: ||u(x_t, c, t; θ) - v_t||²
+    梯度更新
+```
+
+- 当 `c` 是真实条件时，网络学习 $u(x_t, c_{txt}, t)$（条件模式）
+- 当 `c = \varnothing$` 时，网络学习 $u(x_t, c_{\emptyset}, t)$（无条件模式）
+
+一个网络，两种技能，训练时几乎零额外开销。在 Wan 中，虽然论文原文没有显式描述这一步，但推理时明确区分了 `conditional output` 和 `unconditional output`，说明训练阶段使用了这种 text dropout 策略。
+
+#### 推理：双前向 + 外推
+
+```
+for t = 1...T:
+    u_cond   = DiT(z_t, c_txt, t)       # 条件前向（有 prompt）
+    u_uncond = DiT(z_t, c_∅, t)         # 无条件前向（空字符串）
+    u_final  = u_uncond + w·(u_cond - u_uncond)  # CFG 融合
+    z_{t+1} ← 用 u_final 更新 z_t        # ODE 步进
+```
+
+每一步需要**两次完整前向传播**，这是 CFG 的主要计算代价。
+
+#### 直观理解
+
+把公式写成差值形式最能揭示本质：
+
+$$\tilde{u} = u_{\text{cond}} + w \cdot \underbrace{(u_{\text{cond}} - u_{\text{uncond}})}_{\text{"文本引导的方向"}}$$
+
+| 分量 | 含义 |
+|------|------|
+| $u_{\text{cond}}$ | "有 prompt 时，模型认为该往哪个方向走" |
+| $u_{\text{uncond}}$ | "没有任何条件时，模型自由发挥会走的方向" |
+| $u_{\text{cond}} - u_{\text{uncond}}$ | **prompt 施加的"推力方向"** |
+| $w$（通常 5-7） | 放大这个推力，使生成结果更强地偏离无条件分布 |
+
+**$w$ 的效应**：
+- $w=1$：标准条件采样，质量和多样性平衡
+- $w=3\sim5$：显著增强细节、色彩饱和度、文本对齐
+- $w=7\sim10$：极大引导强度，细节夸张但多样性骤降，可能产生伪影
+- $w > 10$：过度引导，画面过饱和、失真、出现奇怪图案
+
+#### CFG ≠ 对抗攻击
+
+扩散模型的得分场 $\boldsymbol{\epsilon}_\theta$ 来自神经网络，而非保守势场（即 $\boldsymbol{\epsilon}_\theta$ 不对应于某个真实分布的精确梯度）。因此 CFG **不是**真正意义上的分类器梯度，也 **不是**对抗攻击。它更像一种**启发式外推**：从"有条件"和"无条件"两个已知点出发，沿连线方向向外延伸。
+
+#### CFG 在 Wan 中的三个具体体现
+
+**① 标准 CFG 推理**（对应 Q2 Step 4）：
+- 空字符串 `""` → umT5 → $c_\emptyset$ 产生无条件嵌入
+- 每步去噪：条件前向 + 无条件前向 → CFG 融合，$w$ 通常 5-7
+
+**② CFG Cache**（Wan 的创新优化，论文 `content/4_4_inference.tex`）：
+> *"In the later stages of sampling, there is a notable similarity between conditional and unconditional DiT outputs."*
+
+采样后期，$u_{\text{cond}}$ 和 $u_{\text{uncond}}$ 越来越接近。原因：
+- 早期（高噪声）：条件起决定性的布局作用，条件 vs 无条件差异很大
+- 后期（低噪声）：画面大体结构已定，主要是纹理细化，两者输出趋同
+
+Wan 利用这一点：**采样后期每隔几步才计算一次无条件前向**，中间步复用条件结果（加残差补偿防细节损失），避免接近一半的前向传播，是实现 **1.62× 加速**的重要组成部分。
+
+**③ 一致性模型蒸馏**：Wan 的 Streamer 模块使用 LCM/VideoLCM 蒸馏时，把 CFG 也蒸馏进一致性模型（论文 `content/5_6_realtime_generation.tex`），蒸馏后的模型只需 4 步采样，每步仅一次前向（CFG 效果已"固化"在权重中），实现 10-20× 加速。
+
+---
+
+### Q11: Wan 如何完成 Prompt 信息的注入？（条件注入体系）
+
+Wan 没有使用 ControlNet，但有一套完整的、分层的条件注入体系。Wan 的 DiT 架构使用 **Transformer 原生的注入方式**，分为四个层面：
+
+#### 第 1 层：文本编码
+
+```
+用户 Prompt → Qwen2.5-Plus 改写 → umT5 编码 → c_txt ∈ ℝ^(512×d)
+空字符串 "" → umT5 编码 → c_∅ ∈ ℝ^(512×d)（为 CFG 准备）
+```
+
+Wan 选择 umT5 作为文本编码器，因为：
+- 多语言编码能力强，支持中英文
+- **双向注意力**机制（论文消融实验证明优于单向 LLM：umT5 > Qwen2.5-7B > GLM-4-9B）
+- 同参数规模下收敛更快
+
+#### 第 2 层：架构内注入（DiT 每个 Block 内部）
+
+这是 Wan 条件注入的**主通道**。每个 DiT Block 内部结构为：
+
+```
+[Self-Attention] → [Cross-Attention] → [FFN + AdaLN]
+```
+
+**① Cross-Attention —— 文本条件注入**（论文 `4_2_model_training.tex` 第 41 行）：
+
+> *"We employ the cross-attention mechanism to embed the input text conditions, which can ensure the model's ability to follow instructions even under long-context modeling."*
+
+```
+Q = 潜变量 token（42,525 个，每个代表 8×8 像素区域）
+K = 文本 token（512 个，来自 umT5）
+V = 文本 token（512 个，来自 umT5）
+
+每个空间 token 通过 softmax(QKᵀ/√d)·V 查询自己对应的语义
+```
+
+这是 Wan 文本注入的**唯一主通道**，实现了空间-语义细粒度对应：潜空间中"粉色区域"的 token 关注文本中 "cherry blossoms"，"灰色区域"的 token 关注 "road"。
+
+**② Shared AdaLN —— 时间步条件注入**（论文第 43-47 行）：
+
+> *"We employ an MLP with a Linear layer and a SiLU layer to process the input time embeddings and predict six modulation parameters individually. This MLP is shared across all transformer blocks, with each block learning a distinct set of biases."*
+
+```
+时间步 t → Sinusoidal Embedding → Shared MLP → (γ, β, α₁...α₆)
+                                                     │
+                                            scale/shift 注入 FFN + Attention 层
+```
+
+时间步告诉模型"当前在去噪的哪个阶段"——早期建立全局布局，中期形成物体轮廓和运动方向，后期细化纹理和细节。
+
+**Wan 的创新——Shared AdaLN**：MLP 在所有 Block 间共享，每 Block 只学独立偏置。参数减少约 25%，性能反而更好（因为鼓励了更深网络而非更宽 AdaLN）。
+
+#### 第 3 层：下游任务特定的条件注入
+
+Wan 为每个下游任务定制了轻量注入方式：
+
+**① I2V（图像到视频）：通道拼接 + Decoupled Cross-Attention**（论文 `5_1_i2v.tex`）：
+
+```
+条件图像 → VAE Encoder → z_c（条件 latent）
+噪声     → z_t（噪声 latent）
+掩码     → M
+
+[z_t | z_c | M] → 通道拼接 → DiT（输入通道从 c 变为 2c+s）
+
+另外：
+条件图像 → CLIP Encoder → MLP → Decoupled Cross-Attention → DiT
+                                   （全局上下文注入，类似 IP-Adapter）
+```
+
+关键细节：**新增的投影层用零初始化**，保护预训练权重不被破坏。
+
+**② Camera Motion（相机控制）**（论文 `5_5_camera_motion.tex`）：
+
+```
+相机参数 [R,t], K → Plücker 坐标 P ∈ ℝ^(6×F×H×W)
+                          ↓
+                   PixelUnshuffle（降分辨率）
+                          ↓
+                   CNN 编码器（多层，每层对应一个 DiT Block 层级）
+                          ↓
+                   Zero-init Conv → (γ_i, β_i)
+                          ↓
+                   注入 DiT Block：f_i = (γ_i+1)·f_{i-1} + β_i
+```
+
+使用 zero-initialized convolution，与 ControlNet 的零卷积理念一致。
+
+**③ Video Editing（VACE）：统一条件单元**（论文 `5_2_video_eidting.tex`）：
+
+```
+VCU（Video Condition Unit）= [文本嵌入 + 帧序列 + 掩码序列]
+                                    ↓
+                           概念解耦策略（修改区域 vs 保留区域 → 分离处理）
+                                    ↓
+                          Cross-Attention → DiT
+```
+
+**④ 视频个性化：潜在空间直接条件 + 自注意力扩展**（论文 `5_4_video_personlization.tex`）：
+
+```
+参考人脸 → VAE Encoder → 人脸 latent（不放特征提取器，避免信息损失）
+                              ↓
+              在时序轴上扩展 K 帧（人脸 + 掩码）
+                              ↓
+              自注意力 inpainting 范式 → 扩散生成
+```
+
+#### 第 4 层：Prompt Rewriting（输入预处理对齐）
+
+```
+用户 Prompt（10词）→ Qwen2.5-Plus 改写 → 训练分布对齐（200词稠密描述）
+```
+
+改写遵循三条原则：
+1. 保持原意地添加细节
+2. 注入自然运动属性
+3. 与 post-training caption 结构对齐（风格→内容概要→细节）
+
+为什么需要？训练时用的是 200+ 词的高质量标注，推理时用户只输入 10 个词 → 分布严重不匹配 → 改写弥合差距。
+
+#### 总结：Wan 的完整条件注入栈
+
+```
+用户: "a woman riding a bicycle under cherry blossoms"
+  │
+  ├─ 第1层 Qwen2.5-Plus 改写（对齐训练分布）
+  │     ↓
+  ├─ 第1层 umT5 编码 → 512×d 文本嵌入
+  │     ↓
+  ├─ 第1层 umT5 编码空字符串 → 512×d 无条件嵌入（为 CFG 准备）
+  │
+  ▼
+  ├─ 第2层 Cross-Attention ─┐
+  ├─ 第2层 Shared AdaLN  ──┤ 在每个 DiT Block 中注入
+  │                         │
+  ▼  50步 ODE 求解 ────────┘
+  │
+  ├─ 第3层 如有 I2V/Camera Adapter/VACE → 任务特定条件注入
+  │
+  ├─ CFG (w=5~7)，每步两次前向 → 外推融合
+  │
+  ▼
+最终潜变量 → VAE Decoder → 视频
+```
+
+**核心要点**：Wan 的 Prompt 注入 = Cross-Attention（文本主通道）+ Shared AdaLN（时间条件）+ 任务特定 Adapter（图像/相机/编辑等辅助条件）+ Prompt Rewriting（输入预处理对齐）+ CFG（推理时放大所有条件的效果）。
+
+---
+
+### Q12: 训练时输入 DiT 的是 latent + prompt，推理时只有 prompt，latent 从哪来？
+
+#### 核心问题
+
+训练时 DiT 接收**真实视频加噪后的潜变量** + **文本嵌入**，但推理时没有真实视频，DiT 如何产生可供 VAE 解码的 latent？
+
+#### 关键回答：latent 不是"没有"，而是从**纯随机噪声初始化**，由 DiT 逐步塑造出来的
+
+#### 训练 vs 推理对比
+
+**训练时（已知目标）**：
+
+```
+真实视频 → VAE Encoder → z₀（干净潜变量，真实值）
+                            │
+                    加噪：z_t = t·z₀ + (1-t)·ε（Flow Matching 前向过程）
+                            │
+              DiT(z_t, t, text_embed) → 预测速度场 u
+                            │
+              损失 = ||u - v_t||²（v_t = z₀ - ε 是真实速度）
+```
+
+训练时 DiT 看到的是已知真实视频加噪后的潜变量，它学习的是"给定当前噪声状态和文本，预测该往哪个方向变"。
+
+**推理时（无目标，从零生成）**：
+
+```
+Step 0: z_T ~ N(0, I)          ← 初始潜变量 = 纯高斯噪声！
+                ↓
+Step 1: DiT(z_T, t=T, c_txt)   ← prompt 通过 Cross-Attn 指导方向
+        预测速度 u
+        z_{T-1} = z_T + u·Δt    ← ODE 步进
+                ↓
+Step 2: DiT(z_{T-1}, t=T-1, c_txt)
+        z_{T-2} = z_{T-1} + u·Δt
+                ↓
+        ...（重复共 50 步）...
+                ↓
+Step 50: z₀                    ← 最终干净潜变量
+                ↓
+        VAE Decoder(z₀)        ← 潜变量 → 像素空间视频
+```
+
+**关键点**：推理的初始 latent 就是随机的——DiT 在每一步根据 prompt 预测"该往哪个方向变"，50 步后随机噪声就被塑造成了有意义的潜变量。
+
+#### 类比理解
+
+| | 训练 | 推理 |
+|------|------|------|
+| **类比** | 学生看着标准答案的草稿，学习如何描摹 | 学生面对一张白纸，凭记忆画出来 |
+| **Latent 来源** | 真实视频加噪 → 已知 | 纯随机初始化 |
+| **DiT 的任务** | 学习去噪/速度场映射 | 从噪声出发，逐步塑造结构 |
+| **Prompt 的作用** | 告诉 DiT "这个噪声画面应该变成什么" | 告诉 DiT "你现在往哪个方向塑造" |
+
+#### 为什么这能工作？
+
+扩散模型（包括 Flow Matching）的核心能力是**学到的"去噪"方向在推理时被反过来用于"从零创造"**。
+
+训练时，模型学会了：给定任意噪声状态 $z_t$ 和文本条件 $c$，预测该往哪个方向走能到达真实视频 $z_0$。推理时，虽然起点是纯噪声（而非真实视频加噪），但模型已经学会了**整个潜空间中"向真实数据分布移动"的方向场**——只要沿着这个方向场一步一步走，就能从任意噪声状态走到一个符合文本描述的干净潜变量。
+
+```
+训练：真实数据 → 加噪 → 学"去噪方向"
+推理：随机噪声 → 沿学到的方向走 50 步 → 到达"看起来像真实数据"的区域
+```
+
+#### 每一步中 Prompt 的具体作用
+
+```
+DiT 的输入：z_t（当前噪声潜变量，纯数据）+ c_txt（文本嵌入，纯语义）
+
+z_t 通过 Self-Attention  → 让各个空间位置互相协调
+c_txt 通过 Cross-Attention → 让每个空间位置知道自己"应该变成什么"
+时间步 t 通过 AdaLN      → 告诉网络"当前在去噪的哪个阶段"
+```
+
+Prompt 不是一次性"生成"整个 latent，而是在**每一步都参与**：通过 Cross-Attention 告诉 DiT"在当前去噪阶段，每个空间区域应该往什么语义方向变化"。
+
+#### 结合 Wan 的完整流程
+
+```
+Step 0: z_T ~ N(0,I), shape [C, F, H, W]     ← 纯噪声初始化
+Step 1: 改写 prompt → umT5 → c_txt
+        空字符串 → umT5 → c_∅（为 CFG 准备）
+Step 2: for t = T down to 1:
+          u_cond   = DiT(z_t, t, c_txt)       ← 条件前向
+          u_uncond = DiT(z_t, t, c_∅)         ← 无条件前向
+          u_cfg    = u_uncond + w·(u_cond - u_uncond)  ← CFG 融合
+          z_{t-1}  = z_t + u_cfg·Δt            ← ODE 步进
+Step 3: z₀ → VAE Decoder → 视频
+
+整个过程：纯噪声 ──50步 DiT 引导──→ 有意义的潜变量 ──VAE──→ 视频
+```
+
+**一句话总结**：推理的 latent 不是"没有"，而是从纯噪声初始化，由 DiT 在 prompt 引导下逐步塑造出来的。训练时 DiT 学会的是"去噪"能力，推理时这个能力被反过来用于"从零创造"——这正是扩散模型的本质。

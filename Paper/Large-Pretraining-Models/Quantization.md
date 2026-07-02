@@ -15,6 +15,7 @@
 
 ## Post-Training Quantization (PTQ)
 - Q-VLM: Post-training Quantization for Large Vision-Language Models
+- [Q-Sched: Pushing the Boundaries of Few-Step Diffusion Models with Quantization-Aware Scheduling](../../Summary/Diffusion%20Models/summary_qsched_quantization_aware_scheduling.md)
 
 ## Mix-Precision
 - Delta-CoMe: Training-Free Delta-Compression with Mixed-Precision for Large Language Models

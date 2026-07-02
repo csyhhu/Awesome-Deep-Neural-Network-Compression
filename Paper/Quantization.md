@@ -126,6 +126,8 @@
 - Post-training 4-bit quantization of convolution networks for rapid-deployment
 - Improving Neural Network Quantization without Retraining using Outlier Channel Splitting
 - Same, Same But Different: Recovering Neural Network Quantization Error Through Weight Factorization
+- [MorphoQuant: Modality-Aware Quantization for Omni-modal Large Language Models](../Summary/Large%20Pretraining%20Models/summary_morphoquant_omni_modal_quantization.md)
+- [Q-Sched: Pushing the Boundaries of Few-Step Diffusion Models with Quantization-Aware Scheduling](../../Summary/Diffusion%20Models/summary_qsched_quantization_aware_scheduling.md)
 
 ## Parameterized Quantizer
 - Learned Step Size Quantization

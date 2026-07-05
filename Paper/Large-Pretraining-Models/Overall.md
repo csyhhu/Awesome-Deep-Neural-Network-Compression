@@ -38,7 +38,6 @@
     
 ### [RWKV](https://arxiv.org/abs/2305.13048)
 
-
 - [WizardLM](https://github.com/nlpxucan/WizardLM)
 - [MPT](https://www.mosaicml.com/blog/mpt-30b)
 

@@ -855,3 +855,56 @@ Step 3: z₀ → VAE Decoder → 视频
 ```
 
 **一句话总结**：推理的 latent 不是"没有"，而是从纯噪声初始化，由 DiT 在 prompt 引导下逐步塑造出来的。训练时 DiT 学会的是"去噪"能力，推理时这个能力被反过来用于"从零创造"——这正是扩散模型的本质。
+
+---
+
+### Q13: 本文在训练和推理使用了哪种量化策略？
+
+Wan 在**训练**和**推理**阶段采用了完全不同的量化/精度策略：
+
+#### 训练阶段
+
+训练阶段**不使用量化**，仅采用 **BF16 混合精度训练（bf16-mixed precision）**：
+
+- 论文原文（`4_2_model_training.tex` 第 104 行）：*"We employ efficient training at bf16-mixed precision combined with the AdamW optimizer."*
+- 训练时 VAE 和 Text Encoder 冻结，仅 DiT 参与优化，DiT 占整体训练计算量的 **85% 以上**
+- 训练不需要量化，因为主要瓶颈是注意力计算的 $O(s^2)$ 复杂度和显存（激活存储可达 8 TB），而非数值精度
+
+#### 推理阶段
+
+推理阶段针对**两种不同场景**使用了不同的量化策略：
+
+##### 场景一：标准推理（服务端，14B 模型）
+
+两种量化技术协同工作：
+
+| 量化技术 | 策略 | 加速比 |
+|----------|------|--------|
+| **FP8 GEMM** | 权重：per-tensor 量化；激活：per-token 量化。DiT Block 中所有 GEMM 操作使用 FP8 精度 | **1.13×** |
+| **8-Bit FlashAttention** | 混合 INT8/FP8：$S=QK^T$ 用 **INT8**，$O=PV$ 用 **FP8**；块间累积用 **FP32**（借鉴 DeepSeek-V3 的 FP8 GEMM 方法），H20 GPU 上达到 **95% MFU** | **1.27×** |
+
+FP8 GEMM + 8-Bit FlashAttention + Diffusion Cache（1.62×）累计加速约 **2.32×**。
+
+**8-Bit FlashAttention 的设计动机**：
+- 原生 FlashAttention3 的 FP8 实现在视频生成中质量下降严重
+- SageAttention 使用 INT8+FP16 混合精度减少精度损失，但未针对 Hopper GPU 优化
+- Wan 的自研方案：混合 INT8/FP8 + FP32 跨块累积，解决了长序列下 14-bit 累加器溢出问题
+
+##### 场景二：消费级部署（Streamer 实时视频生成）
+
+针对 RTX 4090 等消费级 GPU，使用两种量化策略（论文 `5_6_realtime_generation.tex`）：
+
+| 量化技术 | 目标 | 效果 |
+|----------|------|------|
+| **INT8 量化**（torchao） | 注意力层 + 线性头 | 显著减少显存占用，保持生成质量，但加速有限 |
+| **TensorRT 量化** | 整体模型 | 大幅加速，单张 RTX 4090 达 8-20 FPS，但可能引入轻微伪影和不稳定性 |
+
+#### 总结对比
+
+| 阶段 | 量化策略 | 核心目的 |
+|------|----------|----------|
+| **训练** | BF16 混合精度（非量化） | 保证训练稳定性和数值精度 |
+| **推理（服务端）** | FP8 GEMM + 混合INT8/FP8 FlashAttention | 降低延迟，加速单步去噪 |
+| **推理（消费级）** | INT8 (torchao) + TensorRT 量化 | 降低显存，实现实时生成（8-20 FPS） |
+
+**关键要点**：Wan 的训练阶段不涉及量化，仅使用混合精度训练；推理阶段根据部署场景分层使用 FP8（服务端 GPU）、INT8（消费级 GPU）和 TensorRT 量化，其中 8-Bit FlashAttention 的混合 INT8/FP8 策略（$S$ 用 INT8、$O$ 用 FP8、跨块 FP32 累积）是本文在量化方面的核心创新。

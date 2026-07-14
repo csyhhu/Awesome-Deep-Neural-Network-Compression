@@ -29,5 +29,6 @@
 - SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models
 - OmniQuant: Omnidirectionally Calibrated Quantization for Large Language Models
 - AffineQuant: Affine Transformation Quantization for Large Language Models
+- [QuaRot: Outlier-Free 4-Bit Inference in Rotated LLMs](../../Summary/Large%20Pretraining%20Models/summary_quarot.md)
 - [CodeQuant: Unified Clustering and Quantization for Enhanced Outlier Smoothing in Low-Precision Mixture-of-Experts](../../Summary/Large%20Pretraining%20Models/summary_codequant_moe_clustering_quantization.md)
 - [ParoQuant: Pairwise Rotation Quantization for Efficient Reasoning LLM Inference](../../Summary/Large%20Pretraining%20Models/summary_paroquant_pairwise_rotation_quantization.md)

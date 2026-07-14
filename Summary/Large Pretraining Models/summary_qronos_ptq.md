@@ -165,6 +165,75 @@ $$w^{(1)}_{\geq 2} = \widetilde{X}_{\geq 2}^{\dagger} \left( Xw - \widetilde{X}_
 
 **关键直觉**：$t=1$ 做了一次「全局对齐」——将整列辅助权重全部调整到 $\widetilde{X}$ 空间下，此后只需按自然顺序逐个 RTN + Cholesky 微调即可。这正是 Qronos 仅需 $t=1$ 一次复杂计算就能实现跨层纠错的根本原因。
 
+### Q6: 本文的对比方法包括什么？
+
+本文将量化流程分为两个阶段（见论文 Figure 1），Qronos 定位为 **Stage 2（取整方法）**，对比方法也按此划分：
+
+**Stage 2 对比基线（取整方法，Qronos 直接竞争）**：
+
+| 方法 | 特点 |
+|------|------|
+| **RTN** | 最近邻取整，无数据驱动 |
+| **OPTQ (GPTQ)** | 贪心逐列量化 + Hessian 驱动的误差补偿；仅优化 $\|\widetilde{X}(W-Q)\|$，无法处理输入漂移 |
+| **GPFQ** | 贪心路径跟随，逐列量化 + 误差扩散；当 $X \neq \widetilde{X}$ 时路径尾部不对齐 |
+| **GPTAQ** | OPTQ 的扩展，支持非对称校准 |
+
+**Stage 1 对比方法（量化变换，Qronos 兼容但不竞争）**：
+
+| 类别 | 方法 | 核心思想 |
+|------|------|---------|
+| 缩放类 | **SmoothQuant** | 将量化难度在 weight 和 activation 之间平滑迁移 |
+| | **MagR** | 通过近端梯度下降直接最小化权重的 $\ell_\infty$ 范数 |
+| 旋转类 | **HIP** (基于 QuaRot/QuIP#) | 利用 Hadamard 旋转使权重 incoherent，消除 outlier |
+| | **QuaRot** | Hadamard 旋转消除激活值 outlier，端到端 4-bit 量化 |
+| | **SmoothRot** | 通道级缩放 + 旋转的组合 |
+| | **SpinQuant** | 在 Stiefel 流形上学习最优旋转矩阵 |
+
+**实验设计理念**：论文固定 Stage 1，单独评估 Stage 2 的影响。例如：
+- 仅权重量化：HIP + MagR 作为 Stage 1，比较不同 rounding 方法
+- 权重-激活量化：QuaRot / SmoothRot / SpinQuant 分别作为 Stage 1，比较不同 rounding 方法
+
+### Q7: Qronos 与 QuaRot 有什么区别？
+
+**核心定位不同：两者不竞争，是互补关系。**
+
+| 维度 | Qronos | QuaRot |
+|------|--------|--------|
+| **Pipeline 位置** | Stage 2：取整方法（Rounding） | Stage 1：量化变换（Transformation） |
+| **解决的问题** | 如何将浮点值映射到离散量化网格？ | 如何修改模型使 weight/activation 更易量化？ |
+| **核心技术** | 交替误差纠正 + 扩散的贪心取整算法 | Hadamard 旋转消除激活值 outlier |
+| **优化目标** | $\min\|XW - \widetilde{X}Q\|^2$（显式纠正前层量化引起的输入漂移） | 计算不变性：$\mathbf{XQ} \cdot \mathbf{Q}^\top\mathbf{W} = \mathbf{XW}$ |
+| **推理开销** | **零**（不修改计算图） | 需在线 Hadamard 变换（Walsh-Hadamard, $O(d\log d)$，约 7% 开销） |
+
+**关键洞察（论文原文）**：
+
+> "The latest innovations in PTQ, including QuaRot, SpinQuant, among many others, are skewed towards proposing and improving transformations that address the quantization challenges exacerbated in LLMs. These studies often only consider RTN and OPTQ. Meanwhile, our work explicitly focuses on improving the rounding method while remaining compatible with these transformations."
+
+即：QuaRot 等方法是改进 Stage 1，但 Stage 2 仅用了 RTN/OPTQ；Qronos 专门改进 Stage 2，可以与任何 Stage 1 方法组合。
+
+**实验验证的互补性**：
+
+论文在 W4A4KV4 设置下（Llama3-8B）：
+
+| Stage 1 | Stage 2 | WikiText2 ↓ | 提升 |
+|---------|---------|-------------|------|
+| QuaRot | RTN | 15.9 | - |
+| QuaRot | OPTQ | 10.3 | -5.6 |
+| QuaRot | **Qronos** | **9.3** | **-6.6** |
+| SpinQuant | RTN | 13.4 | - |
+| SpinQuant | OPTQ | 8.9 | -4.5 |
+| SpinQuant | **Qronos** | **8.7** | **-4.7** |
+
+即 Qronos + QuaRot 的组合显著优于 QuaRot + OPTQ，证明了**更好的取整方法可以进一步释放变换方法的潜力**。
+
+**三角不等式解释 Qronos 为何优于 OPTQ**：
+
+$$\underbrace{\|XW - \widetilde{X}Q\|}_{\text{Qronos 目标}} \leq \underbrace{\|(X - \widetilde{X})W\|}_{\text{激活漂移项}} + \underbrace{\|\widetilde{X}(W - Q)\|}_{\text{权重误差项（OPTQ 目标）}}$$
+
+- OPTQ 只最小化第二项（权重误差），忽略了第一项（激活漂移）
+- Qronos 直接最小化完整目标，通过 $t=1$ 步骤用 $X$ 和 $\widetilde{X}$ 重新标定最优值来纠正输入漂移
+- 调优量化网格参数（scale/zero point）只能影响 $Q$ 从而影响第二项，无法触及第一项
+
 ### Q5: 论文有验证过从第一步起就直接 RTN + Cholesky 吗？OPTQ vs Qronos 的实验是干净的消融吗？
 
 **答：论文没有做这个消融实验，且 OPTQ vs Qronos 不是对 $t=1$ 步骤的干净消融。**

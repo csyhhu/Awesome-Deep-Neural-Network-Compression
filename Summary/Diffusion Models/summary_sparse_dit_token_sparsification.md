@@ -7,6 +7,46 @@
 
 ---
 
+**综合理解**：
+> "本文采用了 Mean Pooling 和降采样来压缩 token，并通过实验发现了 DiT 低层使用 Mean Pooling, 中层使用降采样，高层维持原有 transformer 的方法。并渐进随着采样步数减少稀疏度的方法。"
+
+**点评：理解基本正确，但有几处需要细化和修正**
+
+1. **"Mean Pooling" → 更准确说是"全局平均池化（Global Average Pooling）"**
+   - 不是简单的 mean pooling，而是 Poolingformer 结构：对 Value 做全局平均池化后 repeat 到原始 token 数量再加回输入
+   - 可视为 MetaFormer 的特例（pooling kernel size = input size）
+   - 关键区别：**底层 token 数量不变**，只是 attention 被替换为 pooling，不做 token 稀疏化
+
+2. **"中层使用降采样" → 表述不够准确**
+   - 中层使用的是 **Sparse-Dense Token Module (SDTM)**，核心是稀疏 token 和稠密 token 的交替处理
+   - 不是简单的降采样，而是：
+     - **稀疏 token 初始化**：通过自适应空间池化从稠密 token 生成 M 个稀疏 token
+     - **稀疏 token 处理**：M 个 token 过 Transformer（大幅省算力）
+     - **稠密 token 恢复**：上采样 + 线性融合 + cross-attention 恢复稠密表示
+     - **稠密 token 精炼**：少量 Transformer 层增强局部细节
+   - SDTM 是一个完整的"稀疏化→处理→恢复→精炼"循环，可级联多个
+
+3. **"渐进随着采样步数减少稀疏度" → 方向正确，但措辞需精确**
+   - 实际操作是：**剪枝率 r 随时间步递减**（稀疏度降低，token 数量增加）
+   - 早期：r 大 → token 少 → 处理全局低频结构
+   - 后期：r 小 → token 多 → 处理局部高频细节
+   - 公式：r 从 r_min 线性增长到 r_max（注意方向）
+
+4. **补充用户遗漏的关键点**：
+   - SDTM 中稀疏 token 与稠密 token 通过 **cross-attention** 交互，不是简单的降采样/上采样
+   - 位置编码在密集 token 生成时需要重新引入（因为 Poolingformer 和 Sparse Transformer 会干扰位置信息）
+   - 预训练权重的加载策略：Poolingformer 中没有 Q/K，相关权重不加载；W1 初始化为全零、W2 初始化为单位矩阵
+
+---
+
+## 综合理解（修正版）
+
+> SparseDiT 通过分析 DiT 内部不同层的 self-attention 特性，设计了**空间三段式 + 时间动态调整**的 token 稀疏化框架：
+> - **底层**：用 Poolingformer（全局平均池化替代 self-attention）高效提取全局特征，token 数量不变
+> - **中层**：用 SDTM 级联结构交替处理稀疏 token（捕获全局结构）和稠密 token（精炼局部细节），通过 cross-attention 实现信息交互
+> - **顶层**：保持标准 Transformer 处理全量 token，专注高频细节
+> - **时间维度**：随去噪推进逐步降低剪枝率（增加 token 数量），匹配"早期全局 → 后期细节"的生成规律
+
 ## 1. 核心洞察 (Core Insights)
 
 通过分析 DiT 模型中不同层的注意力图（attention map），作者发现了三个关键观察：
@@ -158,3 +198,26 @@ SparseDiT 可与 DDIM、Rectified Flow 等高效采样器无缝结合：
 2. **与 KV Cache 结合**：在推理缓存场景下进一步优化
 3. **扩展到更多 DiT 变体**：如 Flux、SVD 等最新架构
 4. **统一框架**：将时间步剪枝率也作为可学习参数
+
+---
+
+## 9. 讨论问答（Q&A）
+
+### Q1: "观察发现：去噪早期主要生成低频全局结构，后期则需要更多高频细节"——本文中有实验说明吗？
+
+**是的，有充分的实验支持：**
+
+1. **注意力方差可视化（Figure 1b）**：文中通过可视化不同采样步骤中 attention map 的归一化方差，展示了：
+   - 不同采样步的注意力方差曲线呈现规律性变化
+   - 随着去噪过程推进（t 从 T→0），注意力方差逐渐增大，表明模型越来越关注局部信息
+   - 底层 attention 方差始终较低（全局信息），顶层方差较高（局部细节）
+
+2. **时间步剪枝消融实验（Table 8, `table:timestep-comb`）**：
+   - 固定 token 数量（8×8）vs 动态调整（6×6→10×10）
+   - 动态调整策略 FID = 2.38，固定策略 FID = 2.48
+   - 验证了"后期 token 数量需求增加"的假设
+
+3. **时间步剪枝公式（Eq. 4）**：
+   - 前 T/4 步：固定高剪枝率 `r_min`（token 少，处理全局结构）
+   - 后 3T/4 步：剪枝率线性递减至 `r_max`（token 逐步增多，处理细节）
+

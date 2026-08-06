@@ -5,6 +5,36 @@
 - **机构**: ByteDance Inc., Rakuten Asia
 - **Arxiv**: [2508.21091](https://arxiv.org/abs/2508.21091)
 
+## 综合理解与分析
+
+### 用户理解
+
+> 本文假设当步使用上一步缓存时，对上一步产生的缓存产生添加一个与时间（采样步数t）相关的scaling和bias. 如果Baseline有20个step，那就需要产生20个scaling factor和bias matrix. 这20个调整系数通过validation set产生出来。 是否使用缓存取决于validation set计算出来两步之间的差异，如果差异较小则跳过。这个跳过的方式也是写死的。
+
+### 理解正确性分析
+
+| 用户理解 | 正确性 | 详细说明 |
+|---------|--------|---------|
+| "使用缓存时添加与时间相关的 scaling 和 bias" | ✅ 正确 | Explicit Error Rectification 模块确实为每个时间步学习了与时间相关的 K_i (scaling) 和 B_i (bias) |
+| "20个step需要产生20个scaling factor和bias matrix" | ⚠️ 部分正确 | 是为每个时间步学习，但不是 scalar 的 scaling factor，而是与输出维度相同的 tensor（`[C, H, W]`），每个时间步一个完整的 tensor |
+| "调整系数通过 validation set 产生" | ✅ 正确 | 这些系数确实是通过标定集（20~30个不同prompt）离线计算出来的 |
+| "是否使用缓存取决于两步之间的差异" | ✅ 正确 | 是否使用缓存取决于相对 L1 误差 `ℓ₁_rel`，误差小于阈值 λ 则跳过（复用缓存） |
+| "跳过的方式是写死的" | ✅ 正确 | 跳过列表 `SKIP_LIST` 是离线标定好的，推理时直接查表，无需在线决策 |
+
+### 关键补充说明
+
+1. **scaling 和 bias 的维度**：每个时间步的 K_i 和 B_i 不是 scalar，而是与模型输出维度相同的 tensor（`[C, H, W]`），实现逐通道、逐空间位置的精准校正。
+
+2. **校正公式**：
+   \[
+   v_i^{\text{corr}} = v_i + \sigma(K_i \cdot v_i + B_i)
+   \]
+   其中 σ 是 sigmoid 函数，K_i 和 B_i 通过闭式公式从标定数据计算得到。
+
+3. **两种校正机制**：用户描述的是 Explicit Error Rectification（显式误差修正），论文还包含 Trajectory-Aware Timestep Adjustment（轨迹感知时间步调整），通过调整积分步长 Δt_i 来减小误差放大效应。
+
+4. **阈值 λ 的影响**：λ 越小，缓存更新越频繁，质量越高但加速比越低；λ 越大，加速比越高但可能损失细节。不同模型推荐不同的 λ 值。
+
 ## 核心思想
 
 提出 **ERTACache**，一个**基于误差校正和时间步调整的扩散模型缓存加速框架**。该工作首次系统性地将缓存引入的误差分解为两类——**特征偏移误差（Feature Shift Error）** 和 **步骤放大误差（Step Amplification Error）**——并分别设计对应的校正策略，在保持甚至提升生成质量的前提下实现 2× 以上的推理加速。
@@ -63,17 +93,115 @@ ERTACache 框架通过三个组件分别针对这两种误差进行联合校正�
 
 > 替代 TeaCache 的在线启发式预测，用离线搜索替代实时决策
 
-**三阶段流程**：
-1. **Ground-Truth 残差记录**：在小标定集上运行完整推理，记录所有时间步的真实残差 \(r^{gt}(x_i, t)\)
-2. **阈值策略搜索**：遍历候选阈值 λ，基于相对 ℓ₁ 误差决定是否复用：
-   \[
-   {\ell_1}_{rel}(x_i, t) = \frac{\| \tilde{r}^{cali} - r^{cali}(x_i, t) \|_1}{\| r^{gt}(x_i, t) \|_1}
-   \]
-   若误差 < λ → 复用缓存；否则重新计算并刷新。最终得到缓存时间步集合 S
-3. **推理时应用**：若 t ∈ S，复用缓存残差 \(\tilde{r}\)；否则计算 \(v_t\) 并刷新缓存
+#### 三阶段流程（基于论文源码 Algorithm 2）
 
-- λ 越小 → 缓存更新越频繁、质量越高；λ 越大 → 加速比越大、可能损失细节
-- **关键洞察**：缓存模式和误差在不同 prompt 间高度一致 → 固定离线策略即可通用
+**阶段 1：Ground-Truth 残差记录**
+
+在标定集 \(P_c\)（20~30 个不同 prompt）上运行完整推理，记录所有时间步的真实残差：
+
+```algorithm
+// Ground-Truth Residual Logging
+FOR i = T-1 DOWNTO 0:
+    v_i = compute output of M for P_c
+    r^gt(x_i, t) = v_i - x_i
+```
+
+**阶段 2：阈值策略搜索**
+
+遍历每个时间步，计算相对 L1 误差并决策是否加入缓存集合：
+
+```algorithm
+// Threshold-Based Policy Search
+FOR i = T-1 DOWNTO 0:
+    v_i = compute output of M
+    r^cali(x_i, t) = v_i - x_i
+    
+    IF i == T-1 OR i == 0:
+        r̃^cali = v_i - x_i  // 首尾步必须计算
+    ELSE:
+        ℓ₁_rel(x_i, t) = ‖r̃^cali - r^cali(x_i, t)‖₁ / ‖r^gt(x_i, t)‖₁
+        
+        IF ℓ₁_rel < λ:
+            ADD i TO cached timesteps set S
+            ṽ_i = x_i + r̃^cali  // 复用缓存
+        ELSE:
+            r̃^cali = v_i - x_i  // 刷新缓存
+```
+
+**关键公式**（来自论文源码第351-354行）：
+
+\[
+{\ell_1}_{rel}(x_i, t) = \frac{\| \tilde{r}^{cali} - r^{cali}(x_i, t) \|_1}{\| r^{gt}(x_i, t) \|_1}
+\]
+
+| 符号 | 含义 |
+|------|------|
+| \(\tilde{r}^{cali}\) | 缓存的残差（从上一次完整计算步复用） |
+| \(r^{cali}(x_i, t)\) | 当前步的真实残差（标定阶段计算） |
+| \(r^{gt}(x_i, t)\) | 当前步的真实速度场（作为归一化因子） |
+| \(\| \cdot \|_1\) | L1 范数（逐元素绝对值求和） |
+
+**缓存决策规则**：
+
+\[
+\text{if } {\ell_1}_{rel}(x_i, t) < \lambda \quad \Rightarrow \quad i \in S \quad (\text{复用缓存})
+\]
+\[
+\text{if } {\ell_1}_{rel}(x_i, t) \geq \lambda \quad \Rightarrow \quad i \notin S \quad (\text{重新计算并刷新缓存})
+\]
+
+**阶段 3：推理时应用**
+
+推理时直接查表，无需任何在线计算：
+
+```algorithm
+FOR i = T-1 DOWNTO 0:
+    IF i ∈ S:
+        ṽ_i = x_i + r̃  // 复用缓存
+    ELSE:
+        v_i = compute output of M
+        r̃ = v_i - x_i  // 刷新缓存
+```
+
+#### 阈值 λ 的影响
+
+| λ 值 | 缓存更新频率 | 加速比 | 生成质量 |
+|------|-------------|--------|---------|
+| 小（如 0.08-0.1） | 频繁更新 | 低 | 高（接近原模型） |
+| 中（如 0.18-0.3） | 适中 | 中 | 平衡 |
+| 大（如 0.6） | 稀疏更新 | 高 | 可能损失细节 |
+
+#### 不同模型的推荐阈值（来自论文实验结果）
+
+| 模型 | 慢速模式（高质量） | 快速模式（高加速比） |
+|------|-------------------|-------------------|
+| Open-Sora 1.2 | λ = 0.1 | λ = 0.18 |
+| CogVideoX | λ = 0.08 | λ = 0.3 |
+| Wan2.1 | λ = 0.08 | - |
+| Flux-dev 1.0 | - | λ = 0.6 |
+
+#### 推理时的决策机制
+
+**关键设计**：推理时没有任何在线计算或动态决策，完全依赖离线标定好的 `SKIP_LIST`，保证了延迟的确定性和推理速度。
+
+#### 跨 Prompt 一致性假设
+
+论文第114行明确指出：
+
+> "Our empirical findings reveal that despite the input-dependent nature of diffusion trajectories, cache reuse patterns and associated errors exhibit strong consistency across prompts."
+
+这意味着：
+1. 在标定集上搜索到的最优缓存策略对所有 prompt 都有效
+2. 无需为每个新 prompt 重新标定
+3. 离线策略足以近似最优
+
+从源码中可以看到，`SKIP_LIST` 是全局固定的：
+
+```bash
+export SKIP_LIST="[2, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25]"
+```
+
+这个列表在推理时对所有 prompt 通用，无需动态调整。
 
 ### 2. 轨迹感知的时间步调整（Trajectory-Aware Timestep Adjustment）
 
@@ -361,3 +489,186 @@ ERTACache (三层全开): 加速 2.9× ←▶ VBench 78.8% + LPIPS 提升 50%（
 - 两者叠加：缩小 Δt 让 ③ 的修正有一个更小的误差底数，补偿起来更精准
 
 ## 局限性
+
+## 讨论：Trajectory-Aware Timestep Adjustment 的校准系数
+
+**问题1**：Trajectory-Aware Timestep Adjustment 在不同 step 的缓存都采用同样的校准系数吗？校准方式具体是怎样的，用一个公式表达出来。
+
+**回答**：
+
+**不是**。不同时间步的缓存采用**不同的校准系数 φ_i**，每个 φ_i 都是根据该步的具体误差离线计算的。
+
+### 校准方式的完整公式
+
+对于第 i 个时间步：
+
+\[
+\Delta t_i = \begin{cases} 
+\Delta t_c, & i \notin S \\ 
+\Delta t_c \cdot \phi_i, & i \in S 
+\end{cases}
+\]
+
+其中校准系数 φ_i 的计算公式为：
+
+\[
+\phi_i = \text{clip}\left(1 - \frac{\| \tilde{v}_i - v_i \|_1}{\| v_i - v_{i+1} \|_1},\ 0,\ 1 \right)
+\]
+
+### 参数含义
+
+| 参数 | 含义 |
+|------|------|
+| \(S\) | 缓存集合（离线策略标定确定的可复用步） |
+| \(\Delta t_c\) | 标准时间步长（如 1/50） |
+| \(\phi_i\) | 第 i 步的校准系数，取值范围 [0, 1] |
+| \(\tilde{v}_i\) | 缓存重建的近似输出 |
+| \(v_i\) | 真实模型计算的输出 |
+| \(\| \tilde{v}_i - v_i \|_1\) | 缓存近似与真实输出的 L1 误差 |
+| \(\| v_i - v_{i+1} \|_1\) | 相邻两步真实输出的 L1 差异 |
+
+### 直观理解
+
+- **当缓存误差大**（\(\|\tilde{v}_i - v_i\|_1\) 大）→ φ_i 小 → Δt_i 小 → 走小步，减小误差放大
+- **当缓存误差小**（\(\|\tilde{v}_i - v_i\|_1\) 小）→ φ_i 接近 1 → Δt_i 接近 Δt_c → 正常步长
+
+每个时间步的 φ_i 都是**离线预先计算**的，推理时直接查表使用。
+
+---
+
+**问题2**：如果缓存了两个step（如 t→t+2），t到t+2的φ也是需要计算的？
+
+**回答**：
+
+**是的，每个时间步都需要计算独立的 φ_i。**
+
+### 关键点
+
+1. **φ_i 按时间步独立计算**：每个时间步 i 都有自己的 φ_i，与其他时间步无关
+2. **分母是相邻真实输出的差异**：\(\| v_i - v_{i+1} \|_1\) 是两个连续时间步真实模型输出的 L1 距离
+3. **不管缓存几步，每步都需要 φ**：即使缓存了 t→t+2 两步，t 和 t+1 都需要各自的 φ_t 和 φ_{t+1}
+
+从源码 `ertacache_flux.py` 可以看出：
+
+```python
+# skip_list 定义哪些时间步跳过（使用缓存）
+pipeline.transformer.__class__.skip_list = json.loads(os.getenv('SKIP_LIST','[]'))
+# 例如: SKIP_LIST="[2, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25]"
+```
+
+每个 skip 的时间步都有对应的 φ_i，用于调整该步的积分步长。
+
+**假设合理性**：论文假设不同 prompt 下的量级差异近似，因此用 validation set 统计出的 φ_i 对所有 prompt 通用。
+
+---
+
+## 讨论：两种校准机制的区别
+
+**问题1**：Explicit Error Rectification via Residual Linearization 和 Trajectory-Aware Timestep Adjustment 都是校准吗？有什么不一样呢？
+
+**回答**：
+
+**两者都是校准/校正机制，但针对的误差类型和校正方式完全不同。**
+
+### 核心区别
+
+| 维度 | Trajectory-Aware Timestep Adjustment | Explicit Error Rectification |
+|------|-------------------------------------|-----------------------------|
+| **针对的误差** | **步骤放大误差**（Step Amplification Error）：\(\Delta t_i \cdot \varepsilon_i\) | **特征偏移误差**（Feature Shift Error）：\(\varepsilon_i\) |
+| **校正方式** | 调整积分步长 Δt_i | 直接修正输出值 v_i |
+| **作用对象** | 时间步调度（"走多远"） | 模型输出（"往哪走"） |
+| **公式** | \(\Delta t_i = \Delta t_c \cdot \phi_i\) | \(v_i^{\text{corr}} = v_i + \sigma(K_i \cdot v_i + B_i)\) |
+| **参数维度** | scalar（每个时间步一个值） | tensor（每个时间步、每个通道、每个空间位置都有值） |
+| **性质** | 被动防御：误差大就走小步 | 主动修正：直接补偿偏差 |
+| **类比** | "看不清路就慢慢走" | "走错路就往回修正" |
+
+### 详细解释
+
+**1. Trajectory-Aware Timestep Adjustment（被动防御）**
+
+它不直接修正缓存输出的偏差，而是通过**缩小步长**来减小误差的放大效应。
+
+```
+误差传播公式：
+δ = Δt₁·ε₁ + Δt₂·ε₂ + Δt₃·ε₃ + ...
+
+Timestep Adjustment 的思路：
+如果 ε_i 大 → 让 Δt_i 变小 → 乘积 Δt_i·ε_i 变小 → 累积误差变小
+```
+
+**2. Explicit Error Rectification（主动修正）**
+
+它直接对缓存输出的偏差进行补偿，将误差从输出中移除。
+
+```
+缓存输出：ṽ_i = v_i + ε_i（包含偏差 ε_i）
+修正后：ṽ_i^corr = ṽ_i + σ(K_i·ṽ_i + B_i) ≈ v_i（偏差被补偿）
+```
+
+### 两者的协同关系
+
+从消融实验可以看出，两者是**递进互补**的：
+
+| 配置 | Wan2.1 VBench | 说明 |
+|------|--------------|------|
+| Uniform Cache | 79.35% | 基础缓存 |
+| + Offline Policy | 80.59% | 选择好的缓存步 |
+| + Time Adjustment | 80.89% | 缓存步走小步（被动防御） |
+| + Error Rectification | **80.73%** | 直接补偿偏差（主动修正） |
+
+- Time Adjustment 减小了误差放大的"底数"
+- Error Rectification 在这个更小的底数上进行精确补偿
+- 两者叠加效果最佳
+
+---
+
+**问题2**：Explicit Error Rectification 是学出一个 bias 吗（和输出维度一样）？也是和 t 关联？
+
+**回答**：
+
+**是的，它学出的校准参数与输出维度相同，并且与时间步 t 关联。**
+
+### 参数维度（从源码 `adjust_data_analysis.py` 的 `get_K_hw` 函数可见）
+
+```python
+def get_K_hw(real_dict, cache_dict, k_threshold=1, add_mask=False):
+    K_res = []
+    for key in sorted_list:  # 遍历每个时间步
+        real = real_dict[key]  # [C, H, W]
+        cache = cache_dict[key]  # [C, H, W]
+        # 计算每个空间位置的 K 参数
+        k_t = (cache**2 - real * cache) / (cache**2 + lambda_ + penalty)  # [C, H, W]
+        K_res.append(k_t.unsqueeze(0))
+    
+    out_K = torch.concat(K_res, 0)  # [num_steps, C, H, W]
+    return out_K
+```
+
+| 参数 | 维度 | 说明 |
+|------|------|------|
+| \(K_i\) | `[num_steps, C, H, W]` | 每个时间步、每个通道、每个空间位置都有独立的缩放系数 |
+| \(B_i\) | 隐含在公式中 | 通过闭式公式计算，同样是 `[num_steps, C, H, W]` |
+| 校准项 | `[num_steps, C, H, W]` | 与模型输出维度完全相同 |
+
+### 校准公式
+
+从源码 `euler_adjust_func.py` 的 `add_adjust_term` 函数可以看出，误差修正项的计算方式：
+
+\[
+\text{adjust\_term}_i = - \sum_{k=0}^{m-1} B_t(\alpha_{t-k+1}, \alpha_{t-k}) \cdot \varepsilon_{t-k}
+\]
+
+其中 \(B_t(a, b) = b - a\) 是时间步系数。
+
+最终的修正公式为：
+
+\[
+v_i^{\text{corr}} = v_i + \sigma(K_i \cdot v_i + B_i)
+\]
+
+### 总结
+
+**是的**，Explicit Error Rectification 学习的校准参数：
+- **不是 scalar**，而是与输出维度完全相同的 tensor（`[C, H, W]`）
+- **与时间步 t 关联**，每个时间步有独立的 K_i 和 B_i
+- **本质上是学习了一个逐通道、逐空间位置的线性变换**，用于补偿缓存带来的偏差

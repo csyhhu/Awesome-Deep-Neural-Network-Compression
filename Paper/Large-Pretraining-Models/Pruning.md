@@ -14,10 +14,15 @@
 - SlimGPT: Layer-wise Structured Pruning for Large Language Models
 - [RT-Lynx: Putting GEMM Sparsity in the Right Place for Diffusion Models](../../Summary/Diffusion%20Models/summary_rt_lynx_activation_sparsity.md)
 
-### Attention Block Spasity
+## Attention Block Spasity / Token Compression
+- [ToMe: Token Merging for Fast Stable Diffusion](../../Summary/Diffusion%20Models/summary_tome_token_merging_diffusion.md)
 - [DFSAttn: Dynamic Fine-Grained Sparse Attention for Efficient Video Generation](../../Summary/Diffusion%20Models/summary_dfsattn_sparse_attention.md)
+- [USV: Unified Sparsification for Video Generation](../../Summary/Diffusion%20Models/summary_usv_unified_sparsification_video.md)
+- [VSA: Video Sparse Attention for Efficient Video Generation](../../Summary/Diffusion%20Models/summary_vsa_video_sparse_attention.md)
+- [Token Merging for Fast Stable Diffusion](../../Summary/Diffusion%20Models/summary_tome_token_merging_diffusion.md)
 
 ## Sparsity Allocation
 - Discovering Sparsity Allocation for Layer-wise Pruning of Large Language Models
 - AlphaPruning: Using Heavy-Tailed Self Regularization Theory for Improved Layer-wise Pruning of Large Language Models
 - [BudCache: Budget-Constrained Step-Level Diffusion Caching](../../Summary/Diffusion%20Models/summary_budcache_step_level_caching.md)
+- [LSA: Layer-wise Sparse Attention for Efficient Video Generation](../../Summary/Large%20Pretraining%20Models/summary_lsa_layer_sparsity_allocation.md)

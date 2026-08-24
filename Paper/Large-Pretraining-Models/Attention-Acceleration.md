@@ -29,6 +29,10 @@ Linear attention aims at reducing computation complexity in attention from $O(N^
 - FlashTransformers
 - I/O Complexity of Attention, or How Optimal is FlashAttention?
 
+## Indexing Attention
+- [DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models](../../Summary/Large%20Pretraining%20Models/summary_deepseek_v3.2.md)
+- [MiniMax Sparse Attention](../../Summary/Large%20Pretraining%20Models/summary_minimax_sparse_attention.md)
+- [LongCat Sparse Attention: Taming the Lightning via Streaming-aware Hierarchical Cross-Layer Indexing](../../Summary/Large%20Pretraining%20Models/summary_longcat_sparse_attention.md)
 
 ## Block Sparse Attention 
 - [SVOO: Attention Sparsity is Input-Stable —— Training-Free Sparse Attention for Video Generation via Offline Sparsity Profiling and Online QK Co-Clustering](../../Summary/Diffusion%20Models/summary_svoo_training_free_sparse_attention.md)

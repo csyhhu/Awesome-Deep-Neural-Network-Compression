@@ -43,6 +43,7 @@ Paper collection, Summary, Code for Deep Neural Network Compression, including:
 * [ColossalAI](https://github.com/hpcaitech/ColossalAI)
 * [Distiller](https://nervanasystems.github.io/distiller/)
 * [PocketFlow](https://github.com/Tencent/PocketFlow)
+* [Genesis 2](https://github.com/larionovavi-stack/genesis2-cascade-moe) - Cascade MoE with shared neuron pool — inherently compressed architecture where experts share parameters. 10,800 experts in 3.5GB, CPU-only inference.
 
 ## Codes / Tools:
  + [My Implementation](./Codes): My re-implementation of state-of-the-art compression methods.

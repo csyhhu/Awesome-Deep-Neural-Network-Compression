@@ -45,6 +45,7 @@
 - ARM: Augment-REINFORCE-Merge Gradient for Stochastic Binary Networks 
 - An Empirical study of Binary Neural Networks' Optimisation 
 - Integer Networks for Data Compression with Latent-Variable Models 
+- EdgeRazor: A Lightweight Framework For Large Language Models Via Mixed-Precision Quantization-Aware Distillation [[paper]](https://arxiv.org/abs/2605.04062) [[code]](https://github.com/zhangsq-nju/EdgeRazor) [[model]](https://huggingface.co/collections/zhangsq-nju/edgerazor-nbit) [[playground]](https://huggingface.co/spaces/zhangsq-nju/EdgeRazor-PlayGround)
 
 ## Weights & Activation Quantization
 

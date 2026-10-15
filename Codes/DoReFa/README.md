@@ -7,7 +7,7 @@ Updated [Sept.16th, 2021]: Weights/Activation quantization is supported.
 ## How to use it
 
 ### Specify your Dataset Root
-Please refer to [here](./README.md)
+Please refer to [here](../README.md#specify-your-dataset-root)
 
 ### Train a full-precision model
 Please refer to [here](../TTQ/README.md)

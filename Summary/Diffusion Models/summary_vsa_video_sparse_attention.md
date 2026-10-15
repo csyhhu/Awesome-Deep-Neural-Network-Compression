@@ -211,7 +211,7 @@ VSA 在 USV 中作为唯一的稀疏注意力实现，存在以下局限：
 2. **协同效应来源不明**：无法确定"token merge + 稀疏注意力"的协同效应是否为 VSA 特有，还是任何可训练稀疏注意力都能获得
 3. **固定稀疏率分配**：VSA 原有的固定稀疏率选择被 USV 的熵感知策略替代，但两者的交互（如 coarse stage 的 Top-K 是否应随熵调整）未被研究
 
-> 关于 USV 中 token merge + VSA 协同的详细分析，参见 [USV 论文摘要的扩展分析部分](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_usv_unified_sparsification_video.md)
+> 关于 USV 中 token merge + VSA 协同的详细分析，参见 [USV 论文摘要的扩展分析部分](./summary_usv_unified_sparsification_video.md)
 
 ---
 

@@ -3,17 +3,19 @@
 ## How to use it
 
 ### Specify your Dataset Root
-Please refer to [here](./README.md)
+Please refer to [here](../README.md#specify-your-dataset-root)
 
 ### Train a full-precision model
 
-Run `train_base_model.py` by specifying your model architecture and dataset used. Such as:
+From `Codes/TTQ`, run `../train-base-model.py` from the `Codes` directory, specifying your model architecture and dataset:
 
 ```
-python train_base_model.py -m ResNet20 -d CIFAR10
+cd ..
+python train-base-model.py -m ResNet20 -d CIFAR10
+cd TTQ
 ```
-By using `train_base_model.py`, it will generate a folder named as `../Results/model-dataset` (such as 
-`../Results/ResNet20-CIFAR10`) in the upper level folder, with the pretrain network named as `model-dataset-pretrained.pth`
+This generates `Codes/Results/model-dataset` (such as
+`Codes/Results/ResNet20-CIFAR10`), which is `../Results/model-dataset` relative to `Codes/TTQ`, with the pretrained weights named `model-dataset-pretrain.pth`.
 
 ### Put utils in
 

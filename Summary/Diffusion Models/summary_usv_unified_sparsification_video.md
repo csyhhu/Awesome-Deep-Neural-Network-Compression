@@ -484,7 +484,7 @@ DiT 输入: Z ∈ ℝ^{N×d}, N = T×H×W
 
 因此，**"VSA 和 token merge 的协同效应是否是 VSA 独有的"这一问题，本文并未回答**。
 
-> 关于 VSA 的详细技术细节，参见 [VSA 论文摘要](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_vsa_video_sparse_attention.md)
+> 关于 VSA 的详细技术细节，参见 [VSA 论文摘要](./summary_vsa_video_sparse_attention.md)
 
 ---
 

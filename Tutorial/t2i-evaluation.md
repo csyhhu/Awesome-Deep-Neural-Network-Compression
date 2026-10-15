@@ -8,7 +8,7 @@
 
 ## 目录
 
-- [一、核心 Benchmark 与指标速查表](#一核心-benmark-与指标速查表)
+- [一、核心 Benchmark 与指标速查表](#一核心-benchmark-与指标速查表)
 - [二、为什么需要多维度评估？](#二为什么需要多维度评估)
 - [三、各指标详细说明](#三各指标详细说明)
   - [3.1 FID (Fréchet Inception Distance)](#31-fid-fréchet-inception-distance)
@@ -34,8 +34,8 @@
 | 1 | **FID** | 生成质量分布 | 衡量生成图像分布与真实图像分布的距离，越低越好 | 用 Inception v3 提取特征，计算两组图像特征的 Fréchet 距离 | 需真实图像数据集（如 COCO、LAION），代码: [pytorch-fid](https://github.com/mseitzer/pytorch-fid) |
 | 2 | **CLIP Score** | 图文对齐 | 衡量生成图像与输入文本 prompt 的语义相似度，越高越好 | 用 CLIP 编码图像和文本，计算余弦相似度 | 无需下载，使用 [open_clip](https://github.com/mlfoundations/open_clip) 库 |
 | 3 | **GenEval / GenEval 2** | 指令遵循 + 组合推理 | 评估模型对物体、属性、数量、颜色、位置、关系的准确还原率 | GenEval: ~500 prompts, 6 子任务; GenEval 2: 更多物体/属性/关系 + Soft-TIFA 评估方法 | [GenEval](https://github.com/djghosh13/geneval), [GenEval 2](https://github.com/facebookresearch/GenEval2) |
-| 4 | **DPG (Dense Prompt Grounding)** | 细粒度指令遵循 | 评估模型处理密集 prompt 的能力，检查实体、属性、关系是否准确 | 对 1K 个 Dense Prompt 生成图像，用 MLLM（GPT-4V 等）进行结构化打分，输出 5 个子维度分数 | [GitHub](https://github.com/OpenDataLab/Ella) |
-| 5 | **ImageReward** | 人类偏好近似 | 基于人类反馈训练的奖励模型分数，越高越好 | 将图像+prompt 输入预训练的 ImageReward 模型，输出 0-10 分 | [GitHub](https://github.com/THUDM/ImageReward) |
+| 4 | **DPG (Dense Prompt Grounding)** | 细粒度指令遵循 | 评估模型处理密集 prompt 的能力，检查实体、属性、关系是否准确 | 对 1K 个 Dense Prompt 生成图像，用 MLLM（GPT-4V 等）进行结构化打分，输出 5 个子维度分数 | [GitHub](https://github.com/TencentQQGYLab/ELLA/tree/main/dpg_bench) |
+| 5 | **ImageReward** | 人类偏好近似 | 基于人类反馈训练的奖励模型分数，越高越好 | 将图像+prompt 输入预训练的 ImageReward 模型，输出奖励分数（可为负值，并非 0-10 分） | [GitHub](https://github.com/THUDM/ImageReward) |
 | 6 | **Aesthetic Score (LAION)** | 美学质量 | LAION 数据集上训练的美学打分模型，分越高越"美" | 用 [LAION/aesthetic-nsfw-v2](https://huggingface.co/LAION/aesthetic-nsfw-v2) 对每张图像打分（0-1 分） | HuggingFace 模型权重 |
 | 7 | **CVTG-2K / TextCrafter** | 文本渲染（英文） | 评估图像中渲染的英文文字准确率 | 对 2K 个文字渲染 prompt 生成图像，用 OCR 提取文字，计算 Word Accuracy、NED、CLIPScore | [GitHub](https://github.com/textcrafter/TextCrafter) |
 | 8 | **ChineseWord** | 文本渲染（中文） | 评估图像中渲染的中文字符准确率（分 3 级难度） | 对 8105 个汉字逐一生成图像，用 OCR（PaddleOCR）识别并计算字符准确率 | 参考 GB/T 28039-2011 自行构建 |
@@ -159,7 +159,7 @@ FLUX.1 Kontext 论文指出了一个关键现象：**单一的"哪个图像更�
 Soft-TIFA（Soft Text-Image Fidelity Assessment）是 GenEval 2 提出的新型评估方法：
 - 将图像质量评估分解为对**原子视觉元素**（物体、属性、关系等）的独立判断
 - 使用 VQA 模型对每个原子元素进行 yes/no 判定
-- 通过加权融合所有原子判断得到最终分数
+- 对每个 prompt 的原子软分数取算术平均（Soft-TIFA AM，原子级）或几何平均（Soft-TIFA GM，prompt 级），再在基准上取平均；参见 [官方评估说明](https://github.com/facebookresearch/GenEval2#evaluation)
 - **优势**：比 VQAScore 等整体性判别模型更符合人类判断，且更不容易发生 benchmark drift
 
 **产出指标**：
@@ -170,7 +170,7 @@ Soft-TIFA（Soft Text-Image Fidelity Assessment）是 GenEval 2 提出的新型�
 | Counting Accuracy | 数量准确率 |
 | Attribute Accuracy | 属性（颜色/材料/图案）准确率 |
 | Relation Accuracy | 空间关系准确率 |
-| Overall (Soft-TIFA) | 所有原子判断的加权融合分 |
+| Soft-TIFA AM / GM | 原子软分数的算术 / 几何平均，再在基准上平均 |
 
 **计算方式**：
 1. 从 [GitHub](https://github.com/facebookresearch/GenEval2) 下载基准
@@ -198,7 +198,7 @@ Soft-TIFA（Soft Text-Image Fidelity Assessment）是 GenEval 2 提出的新型�
 | Other | 其他 |
 
 **计算方式**：
-1. 从 [GitHub](https://github.com/OpenDataLab/Ella) 下载基准
+1. 从 [GitHub](https://github.com/TencentQQGYLab/ELLA/tree/main/dpg_bench) 下载基准
 2. 对每个 prompt 生成图像
 3. 使用 MLLM（如 GPT-4V、Qwen-VL）对生成结果进行结构化打分
 4. 报告各维度分数及 Overall
@@ -209,7 +209,7 @@ Soft-TIFA（Soft Text-Image Fidelity Assessment）是 GenEval 2 提出的新型�
 
 ### 3.6 ImageReward
 
-**含义**：基于大规模人类反馈训练的奖励模型，给定 prompt + 图像输出一个 0-10 的分数，近似人类偏好判断。
+**含义**：基于大规模人类反馈训练的奖励模型，给定 prompt + 图像输出奖励分数，近似人类偏好判断。分数可为负值，并非限定在 0-10；参见 [ImageReward 官方示例](https://github.com/THUDM/ImageReward#example-use)。
 
 **计算方式**：
 1. 从 [GitHub](https://github.com/THUDM/ImageReward) 安装
@@ -284,7 +284,7 @@ Soft-TIFA（Soft Text-Image Fidelity Assessment）是 GenEval 2 提出的新型�
 |--------|------|---------|
 | GenEval (~500 prompts) | 指令遵循 + 组合推理 | `git clone https://github.com/djghosh13/geneval` |
 | GenEval 2 (更新版) | 指令遵循 + 组合推理（推荐） | `git clone https://github.com/facebookresearch/GenEval2` |
-| DPG (1K prompts) | 细粒度指令遵循 | `git clone https://github.com/OpenDataLab/Ella` |
+| DPG (1K prompts) | 细粒度指令遵循 | `git clone https://github.com/TencentQQGYLab/ELLA`（基准在 `dpg_bench/`） |
 | CVTG-2K (2K prompts) | 英文文本渲染 | `git clone https://github.com/textcrafter/TextCrafter` |
 | COCO 2017 val (5K images) | FID 计算 | [COCO 官网](https://cocodataset.org) |
 | Diverse Prompts (500+) | CLIP Score / Aesthetic / ImageReward | 从 GenEval + DPG 中选取 |
@@ -343,7 +343,7 @@ Soft-TIFA（Soft Text-Image Fidelity Assessment）是 GenEval 2 提出的新型�
 | GenEval 基准 | https://github.com/djghosh13/geneval |
 | GenEval 2 基准 | https://github.com/facebookresearch/GenEval2 |
 | GenEval 2 论文 | https://arxiv.org/abs/2512.16853 |
-| DPG (Ella) | https://github.com/OpenDataLab/Ella |
+| DPG (Ella) | https://github.com/TencentQQGYLab/ELLA/tree/main/dpg_bench |
 | TextCrafter/CVTG-2K | https://github.com/textcrafter/TextCrafter |
 | ImageReward | https://github.com/THUDM/ImageReward |
 | LAION Aesthetic | https://huggingface.co/LAION/aesthetic-nsfw-v2 |

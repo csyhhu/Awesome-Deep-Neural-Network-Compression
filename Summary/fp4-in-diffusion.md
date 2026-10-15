@@ -32,23 +32,23 @@
 
 | 工作 | 出处 | 核心思路 |
 |------|------|---------|
-| [NVFP4 QAD](../Large%20Pretraining%20Models/summary_nvfp4_qad.md) | NVIDIA | NVFP4 + KL 蒸馏；block-16 E4M3 + tensor FP32 |
-| [Metis](../Large%20Pretraining%20Models/summary_metis_fp4_training.md) | ICLR 2026 | FP4 训练：SVD 分解 → 窄分布 → 适应 FP4 |
-| [HiFloat4](../Large%20Pretraining%20Models/summary_hifloat4_fp4_pretraining.md) | NeurIPS 2025 | 三级缩放 FP4；RHT 消除异常值 |
+| [NVFP4 QAD](./Large%20Pretraining%20Models/summary_nvfp4_qad.md) | NVIDIA | NVFP4 + KL 蒸馏；block-16 E4M3 + tensor FP32 |
+| [Metis](./Large%20Pretraining%20Models/summary_metis_fp4_training.md) | ICLR 2026 | FP4 训练：SVD 分解 → 窄分布 → 适应 FP4 |
+| [HiFloat4](./Large%20Pretraining%20Models/summary_hifloat4_fp4_pretraining.md) | NeurIPS 2025 | 三级缩放 FP4；RHT 消除异常值 |
 
 ### Diffusion 量化
 
 | 工作 | 出处 | 核心思路 |
 |------|------|---------|
-| [PTQD](../Diffusion%20Models/summary_ptqd_post_training_quantization_diffusion.md) | NeurIPS 2023 | 量化噪声解耦；CNC+BC+VSC 三步 per-step 校正 |
-| [Q-Sched](../Diffusion%20Models/summary_qsched_quantization_aware_scheduling.md) | NeurIPS 2025 | 修改采样调度器 (c_x, c_ε) 补偿量化误差 |
+| [PTQD](./Diffusion%20Models/summary_ptqd_post_training_quantization_diffusion.md) | NeurIPS 2023 | 量化噪声解耦；CNC+BC+VSC 三步 per-step 校正 |
+| [Q-Sched](./Diffusion%20Models/summary_qsched_quantization_aware_scheduling.md) | NeurIPS 2025 | 修改采样调度器 (c_x, c_ε) 补偿量化误差 |
 
 ### Diffusion 缓存
 
 | 工作 | 出处 | 核心思路 |
 |------|------|---------|
-| [ERTACache](../Diffusion%20Models/summary_ertacache.md) | ICLR 2026 | 离线标定缓存步 + 闭式 K,B 误差修正 |
-| [BudCache](../Diffusion%20Models/summary_budcache_step_level_caching.md) | ICML 2026 | 离散策略搜索（SA+HC）+ **Trajectory Matching** 损失 |
+| [ERTACache](./Diffusion%20Models/summary_ertacache.md) | ICLR 2026 | 离线标定缓存步 + 闭式 K,B 误差修正 |
+| [BudCache](./Diffusion%20Models/summary_budcache_step_level_caching.md) | ICML 2026 | 离散策略搜索（SA+HC）+ **Trajectory Matching** 损失 |
 
 ---
 

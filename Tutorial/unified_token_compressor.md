@@ -57,7 +57,7 @@ DiT（Diffusion Transformer）的推理瓶颈在于：每个去噪步都要对 $
 
 ### 2.1 ToMeSD — Token Merging
 
-> **来源**：[summary_tome_token_merging_diffusion.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_tome_token_merging_diffusion.md)
+> **来源**：[summary_tome_token_merging_diffusion.md](../Summary/Diffusion%20Models/summary_tome_token_merging_diffusion.md)
 > **论文**：Bolya et al., CVPR 2023
 
 **核心机制**：无训练的推理时操作。将 token 分为 src/dst 集合，按 attention 相似度把 src 中 $r$ 个 token 合并到 dst（取平均），计算后 unmerge（复制回原位）。
@@ -71,7 +71,7 @@ DiT（Diffusion Transformer）的推理瓶颈在于：每个去噪步都要对 $
 
 ### 2.2 SparseDiT — Token Sparsification
 
-> **来源**：[summary_sparse_dit_token_sparsification.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_sparse_dit_token_sparsification.md)
+> **来源**：[summary_sparse_dit_token_sparsification.md](../Summary/Diffusion%20Models/summary_sparse_dit_token_sparsification.md)
 > **论文**：Chang et al., NeurIPS 2025
 
 **核心机制**：三段式空间架构 + 时间步动态剪枝。
@@ -89,7 +89,7 @@ DiT（Diffusion Transformer）的推理瓶颈在于：每个去噪步都要对 $
 
 ### 2.3 DiffSparse — Learned Token Sparsity
 
-> **来源**：[summary_diffsparse_learned_token_sparsity.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_diffsparse_learned_token_sparsity.md)
+> **来源**：[summary_diffsparse_learned_token_sparsity.md](../Summary/Diffusion%20Models/summary_diffsparse_learned_token_sparsity.md)
 > **论文**：Zhu et al., ICLR 2026 投稿
 
 **核心机制**：**与本框架最接近的现有工作**。由三部分组成：
@@ -118,7 +118,7 @@ DiT（Diffusion Transformer）的推理瓶颈在于：每个去噪步都要对 $
 
 ### 2.4 TokenCache — Token Caching
 
-> **来源**：[summary_tokencache_token_caching_dit.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_tokencache_token_caching_dit.md)
+> **来源**：[summary_tokencache_token_caching_dit.md](../Summary/Diffusion%20Models/summary_tokencache_token_caching_dit.md)
 > **论文**：Lou et al., IEEE TSSP 2025
 
 **核心机制**：三级缓存调度——Token 级（重要性分数 $\alpha$）/ Block 级（自适应分配比例）/ Timestep 级（I-step 全计算 vs P-step 缓存复用）。Cache Predictor 是轻量 DiT block，输出 $L \times N$ 个重要性分数。
@@ -130,7 +130,7 @@ DiT（Diffusion Transformer）的推理瓶颈在于：每个去噪步都要对 $
 
 ### 2.5 DyDiT — Dynamic Diffusion Transformer
 
-> **来源**：[summary_dydt_dynamic_diffusion_transformer.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_dydt_dynamic_diffusion_transformer.md)
+> **来源**：[summary_dydt_dynamic_diffusion_transformer.md](../Summary/Diffusion%20Models/summary_dydt_dynamic_diffusion_transformer.md)
 > **论文**：Zhao et al., ICLR 2025
 
 **核心机制**：两个动态维度——
@@ -144,7 +144,7 @@ DiT（Diffusion Transformer）的推理瓶颈在于：每个去噪步都要对 $
 
 ### 2.6 BudCache — Step-Level Caching
 
-> **来源**：[summary_budcache_step_level_caching.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_budcache_step_level_caching.md)
+> **来源**：[summary_budcache_step_level_caching.md](../Summary/Diffusion%20Models/summary_budcache_step_level_caching.md)
 > **论文**：Lei et al., ICML 2026
 
 **核心机制**：**预算约束的步级缓存**。翻转传统范式——先确定计算预算 $B$（NFE），再通过模拟退火 + 爬山法**离线搜索**最优二进制掩码 $\mathbf{m} \in \{0,1\}^K$（哪些步计算、哪些步复用缓存）。
@@ -161,7 +161,7 @@ DiT（Diffusion Transformer）的推理瓶颈在于：每个去噪步都要对 $
 
 ### 2.7 ERTACache — Error Rectification
 
-> **来源**：[summary_ertacache.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_ertacache.md)
+> **来源**：[summary_ertacache.md](../Summary/Diffusion%20Models/summary_ertacache.md)
 > **论文**：Peng et al., ICLR 2026
 
 **核心机制**：将缓存误差分解为**特征偏移误差**（$\varepsilon_i$）和**步骤放大误差**（$\Delta t_i \cdot \varepsilon_i$），分别用闭式解误差修正（$v_i^{corr} = v_i + \sigma(K_i v_i + B_i)$）和轨迹感知时间步调整（$\Delta t_i = \Delta t_c \cdot \phi_i$）校正。
@@ -172,7 +172,7 @@ DiT（Diffusion Transformer）的推理瓶颈在于：每个去噪步都要对 $
 
 ### 2.8 RT-Lynx — Activation Sparsity
 
-> **来源**：[summary_rt_lynx_activation_sparsity.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_rt_lynx_activation_sparsity.md)
+> **来源**：[summary_rt_lynx_activation_sparsity.md](../Summary/Diffusion%20Models/summary_rt_lynx_activation_sparsity.md)
 > **论文**：Cong et al., arXiv 2026
 
 **核心机制**：利用 DiT 激活值的天然稀疏性（叠加机制导致每 token 仅激活 5%~10% 神经元），对激活施加 2:4 N:M 半结构化稀疏化 + 范数补偿 + LoRA 适应。
@@ -331,7 +331,7 @@ $$W = \sum_{j=1}^{J} \alpha_j \cdot B_j, \quad B_j \text{ 为固定基矩阵}, \
 
 $$\hat{T} = W_\uparrow \cdot T_{\text{out}} \in \mathbb{R}^{N \times d}$$
 
-- $W_\uparrow = W_\downarrow^T$（伪逆恢复）
+- $W_\uparrow = W_\downarrow^T$（转置恢复；一般不等于伪逆）
 - $W_\uparrow$ 独立可学习（如 SDTM 的上采样 + 线性融合）
 - $W_\uparrow$ 可省略（若后续层在 $M$ 个 token 上计算，最后再上采样，类似 SparseDiT 中层处理）
 
@@ -552,7 +552,7 @@ $$s(t) = \sigma\Big(f_\psi\big(T_t, \underbrace{L_{\text{recon}}(t)}_{\text{压�
 
 其中 $L_{\text{recon}}(t) = \|T_t - W_\uparrow \cdot \text{Select}(W_\downarrow \cdot T_t, M)\|^2$。
 
-**反馈逻辑**：$L_{\text{recon}}$ 高 → 压缩损失大 → predictor 降低 $s$（保留更多 token）；$L_{\text{recon}}$ 低 → 压缩安全 → predictor 提高 $s$（压缩更多）。
+**反馈逻辑**：$L_{\text{recon}}$ 高 → 压缩损失大 → predictor 提高 $s$（保留更多 token）；$L_{\text{recon}}$ 低 → 压缩安全 → predictor 降低 $s$（压缩更多）。
 
 这形成**自适应闭环**：简单图像自动多压、复杂图像自动少压。风险是闭环可能导致振荡，需用 EMA 平滑或设 $s \in [s_{\min}, s_{\max}]$ 上下界。
 
@@ -712,11 +712,11 @@ BudCache 选择固定 mask 追求延迟确定；本框架的 predictor 是实例
 
 | 方法 | 总结文档 |
 |------|---------|
-| ToMeSD | [summary_tome_token_merging_diffusion.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_tome_token_merging_diffusion.md)（含 Part III 统一框架） |
-| SparseDiT | [summary_sparse_dit_token_sparsification.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_sparse_dit_token_sparsification.md) |
-| DiffSparse | [summary_diffsparse_learned_token_sparsity.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_diffsparse_learned_token_sparsity.md) |
-| TokenCache | [summary_tokencache_token_caching_dit.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_tokencache_token_caching_dit.md) |
-| DyDiT | [summary_dydt_dynamic_diffusion_transformer.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_dydt_dynamic_diffusion_transformer.md) |
-| BudCache | [summary_budcache_step_level_caching.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_budcache_step_level_caching.md) |
-| ERTACache | [summary_ertacache.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_ertacache.md) |
-| RT-Lynx | [summary_rt_lynx_activation_sparsity.md](file:///d:/WorkSpace/Awesome-Deep-Neural-Network-Compression/Summary/Diffusion%20Models/summary_rt_lynx_activation_sparsity.md) |
+| ToMeSD | [summary_tome_token_merging_diffusion.md](../Summary/Diffusion%20Models/summary_tome_token_merging_diffusion.md)（含 Part III 统一框架） |
+| SparseDiT | [summary_sparse_dit_token_sparsification.md](../Summary/Diffusion%20Models/summary_sparse_dit_token_sparsification.md) |
+| DiffSparse | [summary_diffsparse_learned_token_sparsity.md](../Summary/Diffusion%20Models/summary_diffsparse_learned_token_sparsity.md) |
+| TokenCache | [summary_tokencache_token_caching_dit.md](../Summary/Diffusion%20Models/summary_tokencache_token_caching_dit.md) |
+| DyDiT | [summary_dydt_dynamic_diffusion_transformer.md](../Summary/Diffusion%20Models/summary_dydt_dynamic_diffusion_transformer.md) |
+| BudCache | [summary_budcache_step_level_caching.md](../Summary/Diffusion%20Models/summary_budcache_step_level_caching.md) |
+| ERTACache | [summary_ertacache.md](../Summary/Diffusion%20Models/summary_ertacache.md) |
+| RT-Lynx | [summary_rt_lynx_activation_sparsity.md](../Summary/Diffusion%20Models/summary_rt_lynx_activation_sparsity.md) |

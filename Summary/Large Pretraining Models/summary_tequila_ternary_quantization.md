@@ -1,9 +1,9 @@
 # Tequila: Trapping-free Ternary Quantization for Large Language Models
 
-> **作者**: Shihao Zhang, Haoyu Zhang (UCSD), Ian Colbert (AMD), Rayan Saab (UCSD)
+> **作者**: Hong Huang, Decheng Wu, Rui Cen, Guanghua Yu, Zonghang Li, Kai Liu, Jianchen Zhu, Peng Chen, Xue Liu, Dapeng Wu
 > **会议**: ICLR 2026
 > **代码**: https://github.com/Tencent/AngelSlim
-> **arXiv**: https://arxiv.org/abs/2505.11695
+> **arXiv**: https://arxiv.org/abs/2509.23809
 
 ---
 
